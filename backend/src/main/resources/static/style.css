@@ -1,0 +1,65 @@
+body{
+    font-family: sans-serif;
+    background-color: white;
+
+    display: flex;
+    justify-content:center;
+    align-items:center;
+
+    margin: 0;
+    height:100vh;
+}
+#app-container{
+    background-color: white;
+    padding: 20rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width:300px;
+
+}
+h2 {
+    text-align: center;
+    color: #333;
+    margin-top: 0; /* 移除标题顶部的默认外边距 */
+}
+.form-group {
+    margin-bottom: 1rem; /* 在每个输入组下方增加一些外边距 */
+}
+label {
+    display: block; /* 让标签自己占一行 */
+    justify-content: center;
+    margin-bottom: 0.5rem; /* 在标签和输入框之间增加一点小间距 */
+}
+
+/* 选中所有的 <input> */
+input {
+    width: 100%; /* 让输入框宽度撑满父容器 */
+    padding: 0.5rem; /* 增加输入框的内边距，让文字不贴边 */
+    box-sizing: border-box; /* 这是一个重要的属性，确保 padding 不会撑大盒子的总宽度 */
+    border: 1px solid #ccc; /* 设置一个细细的灰色边框 */
+    border-radius: 4px; /* 也给输入框一点小圆角 */
+}
+button {
+    flex: 1;
+    padding: 0.7rem;
+    background-color: #007bff;
+    color: white;
+    border: none; /* 移除默认边框 */
+    border-radius: 4px;
+    cursor: pointer; /* 当鼠标悬停在按钮上时，显示为小手形状 */
+    font-size: 1rem;
+}
+.button-group {
+    display: flex;
+    gap: 1rem;
+}
+/* 为按钮添加“悬停效果” */
+button:hover {
+    background-color: #0056b3; /* 鼠标放上去时，背景色变深 */
+}
+#message-area {
+    margin-top: 1rem;
+    text-align: center;
+    font-weight: bold;
+    min-height: 1.2em; /* 给它一个最小高度，防止它没内容时影响布局 */
+}
