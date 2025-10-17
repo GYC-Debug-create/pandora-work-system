@@ -1,0 +1,117 @@
+-- Drop tables in reverse order of creation to respect foreign keys
+DROP TABLE IF EXISTS deliverables;
+DROP TABLE IF EXISTS logs;
+DROP TABLE IF EXISTS task_members;
+DROP TABLE IF EXISTS sub_tasks;
+DROP TABLE IF EXISTS tasks;
+DROP TABLE IF EXISTS company_matters;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS departments;
+DROP TABLE IF EXISTS roles;
+
+-- Create tables
+CREATE TABLE roles (
+                       role_id INT AUTO_INCREMENT PRIMARY KEY,
+                       role_name VARCHAR(255) NOT NULL,
+                       description TEXT
+);
+
+CREATE TABLE departments (
+                             department_id INT AUTO_INCREMENT PRIMARY KEY,
+                             department_name VARCHAR(255) NOT NULL,
+                             parent_department_id INT
+);
+
+CREATE TABLE users (
+                       user_id VARCHAR(255) PRIMARY KEY,
+                       username VARCHAR(255) NOT NULL UNIQUE,
+                       password_hash VARCHAR(255) NOT NULL,
+                       email VARCHAR(255) UNIQUE,
+                       full_name VARCHAR(255),
+                       role_id INT,
+                       department_id INT,
+                       mbti_type VARCHAR(50),
+                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                       CONSTRAINT fk_users_role FOREIGN KEY (role_id) REFERENCES roles(role_id),
+                       CONSTRAINT fk_users_department FOREIGN KEY (department_id) REFERENCES departments(department_id)
+);
+
+ALTER TABLE departments ADD CONSTRAINT fk_departments_parent FOREIGN KEY (parent_department_id) REFERENCES departments(department_id);
+
+CREATE TABLE tasks (
+                       task_id INT AUTO_INCREMENT PRIMARY KEY,
+                       task_name VARCHAR(255) NOT NULL,
+                       description TEXT,
+                       creator_id VARCHAR(255),
+                       responsible_person_id VARCHAR(255),
+                       task_type VARCHAR(50),
+                       priority VARCHAR(50),
+                       status VARCHAR(50),
+                       due_date DATE,
+                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                       CONSTRAINT fk_tasks_creator FOREIGN KEY (creator_id) REFERENCES users(user_id),
+                       CONSTRAINT fk_tasks_responsible FOREIGN KEY (responsible_person_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE sub_tasks (
+                           sub_task_id INT AUTO_INCREMENT PRIMARY KEY,
+                           parent_task_id INT,
+                           parent_sub_task_id INT,
+                           sub_task_name VARCHAR(255) NOT NULL,
+                           status VARCHAR(50),
+                           assigned_to_id VARCHAR(255),
+                           deliverable_content TEXT,
+                           approval_comment TEXT,
+                           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                           completed_at TIMESTAMP,
+                           CONSTRAINT fk_subtasks_parent_task FOREIGN KEY (parent_task_id) REFERENCES tasks(task_id),
+                           CONSTRAINT fk_subtasks_parent_subtask FOREIGN KEY (parent_sub_task_id) REFERENCES sub_tasks(sub_task_id),
+                           CONSTRAINT fk_subtasks_assignee FOREIGN KEY (assigned_to_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE task_members (
+                              task_id INT,
+                              user_id VARCHAR(255),
+                              assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                              PRIMARY KEY (task_id, user_id),
+                              CONSTRAINT fk_taskmembers_task FOREIGN KEY (task_id) REFERENCES tasks(task_id),
+                              CONSTRAINT fk_taskmembers_user FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE logs (
+                      log_id INT AUTO_INCREMENT PRIMARY KEY,
+                      user_id VARCHAR(255),
+                      related_task_id INT,
+                      related_sub_task_id INT,
+                      activity_type VARCHAR(255),
+                      description TEXT,
+                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                      CONSTRAINT fk_logs_user FOREIGN KEY (user_id) REFERENCES users(user_id),
+                      CONSTRAINT fk_logs_task FOREIGN KEY (related_task_id) REFERENCES tasks(task_id),
+                      CONSTRAINT fk_logs_subtask FOREIGN KEY (related_sub_task_id) REFERENCES sub_tasks(sub_task_id)
+);
+
+CREATE TABLE company_matters (
+                                 matter_id INT AUTO_INCREMENT PRIMARY KEY,
+                                 title VARCHAR(255) NOT NULL,
+                                 content TEXT,
+                                 creator_id VARCHAR(255),
+                                 importance_level INT,
+                                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                 CONSTRAINT fk_companymatters_creator FOREIGN KEY (creator_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE deliverables (
+                              deliverable_id INT AUTO_INCREMENT PRIMARY KEY,
+                              sub_task_id INT,
+                              uploader_user_id VARCHAR(255),
+                              file_name VARCHAR(255),
+                              file_url VARCHAR(255),
+                              file_type VARCHAR(100),
+                              file_size BIGINT,
+                              uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                              CONSTRAINT fk_deliverables_subtask FOREIGN KEY (sub_task_id) REFERENCES sub_tasks(sub_task_id),
+                              CONSTRAINT fk_deliverables_uploader FOREIGN KEY (uploader_user_id) REFERENCES users(user_id)
+);
+

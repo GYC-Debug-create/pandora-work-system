@@ -1,4 +1,3 @@
-
 package com.lei.springbootpractice4.pojo;
 
 import com.baomidou.mybatisplus.annotation.IdType;
@@ -8,14 +7,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@TableName("Users")
+@TableName("users") // Correct table name mapping
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class UsersPojo {
     @TableId(value="user_id",type= IdType.ASSIGN_UUID)
-    String user_id;
+    String userId;
     String username;
-    String password;
-
+    String passwordHash; // Renamed for clarity
 }
