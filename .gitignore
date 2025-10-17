@@ -1,0 +1,17 @@
+# 忽略 IDE 配置文件
+.idea/
+
+# 忽略 Java 编译输出 (解决 target 文件夹问题)
+target/
+build/
+*.class
+
+# 忽略 Node.js 依赖 (解决你现在10000个文件的问题)
+node_modules/
+
+# 忽略 Web 项目打包输出
+dist/
+
+# 忽略操作系统文件
+.DS_Store
+Thumbs.db
