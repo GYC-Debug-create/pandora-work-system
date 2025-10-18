@@ -1,0 +1,25 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "创始人",
+      "email": "admin@example.com",
+      "role": "admin",
+      "createdAt": "2023-01-01T12:00:00Z"
+    },
+    {
+      "id": 2,
+      "name": "张三",
+      "email": "zhangsan@example.com",
+      "role": "user",
+      "createdAt": "2023-01-02T10:00:00Z"
+    },
+    {
+      "id": 3,
+      "name": "李四",
+      "email": "lisi@example.com",
+      "role": "user",
+      "createdAt": "2023-01-03T11:30:00Z"
+    }
+  ]
+}

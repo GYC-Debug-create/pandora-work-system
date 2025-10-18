@@ -1,0 +1,37 @@
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import { resolve } from 'path'
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [vue()],
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, 'src'),
+    },
+  },
+  server: {
+    host: '127.0.0.1',
+    port: 3000,
+    strictPort: true, // 如果端口被占用，则报错而不是尝试下一个端口
+    hmr: {
+      host: '127.0.0.1'
+    },
+    proxy: {
+      // 配置代理，将API请求转发到后端服务
+      '/api': {
+        target: 'https://m1.apifoxmock.com/m1/7165546-6889710-default',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '')
+      }
+    },
+    // 配置开发服务器处理单页应用的历史记录模式
+    historyApiFallback: true
+  },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    // 如果需要部署到SpringBoot项目中，可以将输出目录设置为SpringBoot的静态资源目录
+    // outDir: '../backend/src/main/resources/static',
+  }
+})

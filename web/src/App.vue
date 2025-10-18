@@ -1,0 +1,17 @@
+<template>
+  <el-config-provider :locale="zhCn">
+    <router-view />
+  </el-config-provider>
+</template>
+
+<script setup>
+import { ref } from 'vue'
+import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
+</script>
+
+<style>
+#app {
+  height: 100vh;
+  width: 100vw;
+}
+</style>

@@ -1,0 +1,56 @@
+/* 全局样式 */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f5f7fa;
+}
+
+/* 布局样式 */
+.app-container {
+  padding: 20px;
+}
+
+.page-container {
+  background-color: #fff;
+  border-radius: 4px;
+  padding: 20px;
+  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+}
+
+.page-header {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.page-title {
+  position: relative;
+  padding-left: 15px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.page-title:before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 16px;
+  background: #409EFF;
+  border-radius: 2px;
+}
+
+.filter-container {
+  margin-bottom: 20px;
+}
+
+.pagination-container {
+  margin-top: 20px;
+  text-align: right;
+}
