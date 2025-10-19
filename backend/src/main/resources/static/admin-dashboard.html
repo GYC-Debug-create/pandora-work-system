@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>管理员后台 - 创建用户</title>
+    <link rel="stylesheet" href="dashboard-style.css">
+</head>
+<body>
+<div id="app-container">
+    <h2>创建新用户</h2>
+    <form id="create-user-form">
+        <div class="form-group">
+            <label for="username-input">用户名:</label>
+            <input type="text" id="username-input" required/>
+        </div>
+        <div class="form-group">
+            <label for="password-input">初始密码：</label>
+            <input type="password" id="password-input" required>
+        </div>
+        <div class="form-group">
+            <label for="fullname-input">全名:</label>
+            <input type="text" id="fullname-input" />
+        </div>
+        <div class="form-group">
+            <label for="email-input">邮箱:</label>
+            <input type="email" id="email-input" />
+        </div>
+        <div class="form-group">
+            <label for="mbti-input">MBTI:</label>
+            <input type="text" id="mbti-input" />
+        </div>
+        <div class="form-group">
+            <label for="department-select">部门:</label>
+            <select id="department-select">
+            </select>
+        </div>
+        <div class="button-group">
+            <button type="submit" id="create-user-button">创建用户</button>
+        </div>
+    </form>
+    <p id="message-area"></p>
+</div>
+<script src="dashboard-script.js"></script>
+</body>
+</html>

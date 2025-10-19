@@ -1,145 +1,76 @@
-// Mock数据
-const mockUsers = [
-  { id: 1, name: '张三', email: 'user-8ab0c230@example.invalid', role: '创始人', status: '活跃', createTime: '2024-01-15' },
-  { id: 2, name: '李四', email: 'user-2535fa39@example.invalid', role: '部门老总', status: '活跃', createTime: '2024-02-20' },
-  { id: 3, name: '王五', email: 'user-7a76a4ca@example.invalid', role: '部门老总', status: '活跃', createTime: '2024-03-10' },
-  { id: 4, name: '赵六', email: 'user-4e35f2e7@example.invalid', role: '团队长', status: '活跃', createTime: '2024-04-05' },
-  { id: 5, name: '钱七', email: 'user-0070b2a3@example.invalid', role: '普通用户', status: '活跃', createTime: '2024-05-12' },
-  { id: 6, name: '孙八', email: 'user-fe78a7f7@example.invalid', role: '普通用户', status: '禁用', createTime: '2024-06-18' },
-  { id: 7, name: '周九', email: 'user-aaca077a@example.invalid', role: '团队长', status: '活跃', createTime: '2024-07-22' },
-  { id: 8, name: '吴十', email: 'user-9ea892ed@example.invalid', role: '普通用户', status: '活跃', createTime: '2024-08-30' }
-]
+// web/src/api/user.js
+import request from '@/utils/request' // 引入配置好的 Axios 实例
 
 /**
  * 登录
- * @param {Object} data 登录信息
+ * @param {Object} data { username: 'xxx', passwordHash: 'xxx' }
  * @returns {Promise}
  */
 export function login(data) {
-  return Promise.resolve({
-    data: {
-      token: '<REDACTED>',
-      user: { name: 'admin', role: '系统管理员' }
-    }
+  return request({
+    url: '/user/login', // 对应后端的 @PostMapping("/login")
+    method: 'post',
+    data // axios会自动将JS对象转为JSON字符串
   })
 }
 
 /**
- * 获取用户列表
- * @param {Object} params 查询参数
+ * 获取用户列表 (后端需要实现此接口)
+ * @param {Object} params 查询参数 { pageNum, pageSize, name, email, role }
  * @returns {Promise}
  */
-export function getUserList(params = {}) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // 默认参数，避免解构undefined导致错误
-      const { pageNum = 1, pageSize = 10, name, email, role } = params
-      
-      let filteredUsers = [...mockUsers]
-      
-      // 应用筛选条件
-      if (name) {
-        filteredUsers = filteredUsers.filter(user => 
-          user.name.toLowerCase().includes(name.toLowerCase())
-        )
-      }
-      if (email) {
-        filteredUsers = filteredUsers.filter(user => 
-          user.email.toLowerCase().includes(email.toLowerCase())
-        )
-      }
-      if (role) {
-        filteredUsers = filteredUsers.filter(user => user.role === role)
-      }
-      
-      // 分页处理
-      const total = filteredUsers.length
-      const start = (pageNum - 1) * pageSize
-      const end = start + pageSize
-      const paginatedUsers = filteredUsers.slice(start, end)
-      
-      resolve({
-        data: paginatedUsers,
-        total: total,
-        pageNum: pageNum,
-        pageSize: pageSize
-      })
-    }, 300) // 模拟网络延迟
+export function getUserList(params) {
+  // 假设后端接口为 GET /users
+  return request({
+    url: '/users', // <<--- 后端需要实现此 GET 接口
+    method: 'get',
+    params // GET请求的参数放在params里
   })
+  // 注意：前端期望返回 { data: [...], total: xx } 格式
 }
 
 /**
- * 获取用户详情
- * @param {number} id 用户ID
- * @returns {Promise}
- */
-export function getUserDetail(id) {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const user = mockUsers.find(u => u.id === parseInt(id))
-      if (user) {
-        resolve({ data: user })
-      } else {
-        reject(new Error('用户不存在'))
-      }
-    }, 200)
-  })
-}
-
-/**
- * 创建用户
- * @param {Object} data 用户数据
+ * 创建用户 (管理员)
+ * @param {Object} data 用户数据 { username, passwordHash, fullName, email, mbtiType, departmentId }
  * @returns {Promise}
  */
 export function createUser(data) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const newUser = {
-        ...data,
-        id: Math.max(...mockUsers.map(u => u.id)) + 1,
-        createTime: new Date().toISOString().split('T')[0]
-      }
-      mockUsers.push(newUser)
-      resolve({ data: newUser })
-    }, 300)
+  return request({
+    url: '/user/registerByAdmin', // 对应后端的 @PostMapping("/registerByAdmin")
+    method: 'post',
+    data
   })
+  // 注意：后端当前返回的是字符串 "用户创建成功" 或 "创建失败..."
+  // 前端 createUser().then((response) => ...) 期望 response.data 里包含新用户ID，
+  // 您可能需要调整后端，让它在成功时返回新创建的用户对象（或至少包含ID）。
 }
 
 /**
- * 更新用户
- * @param {number} id 用户ID
- * @param {Object} data 用户数据
+ * 更新用户 (后端需要实现此接口)
+ * @param {number|string} id 用户ID
+ * @param {Object} data 用户数据 { name, email, role, status }
  * @returns {Promise}
  */
 export function updateUser(id, data) {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const index = mockUsers.findIndex(u => u.id === parseInt(id))
-      if (index !== -1) {
-        mockUsers[index] = { ...mockUsers[index], ...data }
-        resolve({ data: mockUsers[index] })
-      } else {
-        reject(new Error('用户不存在'))
-      }
-    }, 300)
+  // 假设后端接口为 PUT /users/{id}
+  return request({
+    url: `/users/${id}`, // <<--- 后端需要实现此 PUT 接口
+    method: 'put',
+    data
   })
 }
 
 /**
- * 删除用户
- * @param {number} id 用户ID
+ * 删除用户 (后端需要实现此接口)
+ * @param {number|string} id 用户ID
  * @returns {Promise}
  */
 export function deleteUser(id) {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const index = mockUsers.findIndex(u => u.id === parseInt(id))
-      if (index !== -1) {
-        mockUsers.splice(index, 1)
-        resolve({ data: { message: '删除成功' } })
-      } else {
-        reject(new Error('用户不存在'))
-      }
-    }, 300)
+  // 假设后端接口为 DELETE /users/{id}
+  return request({
+    url: `/users/${id}`, // <<--- 后端需要实现此 DELETE 接口
+    method: 'delete'
   })
 }
+
+// 注意：获取用户详情 (getUserDetail) 在前端代码中未使用，暂不实现对接

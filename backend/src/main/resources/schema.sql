@@ -1,4 +1,3 @@
--- Drop tables in reverse order of creation to respect foreign keys
 DROP TABLE IF EXISTS deliverables;
 DROP TABLE IF EXISTS logs;
 DROP TABLE IF EXISTS task_members;
@@ -114,4 +113,3 @@ CREATE TABLE deliverables (
                               CONSTRAINT fk_deliverables_subtask FOREIGN KEY (sub_task_id) REFERENCES sub_tasks(sub_task_id),
                               CONSTRAINT fk_deliverables_uploader FOREIGN KEY (uploader_user_id) REFERENCES users(user_id)
 );
-

@@ -1,11 +1,9 @@
-console.log("script.js 加载成功");
-
 const usernameInput = document.getElementById("username-input");
 const passwordInput = document.getElementById("password-input");
-const createUserButton = document.getElementById("create-user-button");
+const loginButton = document.getElementById("login-button");
 const messageArea = document.getElementById("message-area");
 
-createUserButton.addEventListener("click", function (event) {
+loginButton.addEventListener("click", function (event) {
     event.preventDefault();
     if (!usernameInput.value || !passwordInput.value) {
         messageArea.textContent = '用户名和密码不能为空！';
@@ -14,20 +12,34 @@ createUserButton.addEventListener("click", function (event) {
     }
     let userToSend = {
         username: usernameInput.value,
-        passwordHash: passwordInput.value // Send raw password
+        passwordHash: passwordInput.value
     };
-    fetch("user/registerByAdmin", {
+
+    fetch("/user/login", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
+        headers: {"Content-Type": "application/json"},
         body: JSON.stringify(userToSend)
-    }).then(response => response.text()).then(data => {
-        messageArea.innerText = data;
-        messageArea.style.color = 'green';
-    }).catch(error => {
-        console.error('请求发生错误:', error);
-        messageArea.textContent = '请求失败，请检查网络或后台服务。';
-        messageArea.style.color = 'red';
-    });
+    })
+        .then(response => {
+            // 关键修正：检查HTTP响应状态码
+            if (response.ok) { // response.ok 为 true 代表状态码在 200-299 之间
+                return response.json();
+            } else {
+                // 如果状态码不是2xx (例如401), 则将错误信息文本传递给下一个.catch
+                return response.text().then(text => { throw new Error(text) });
+            }
+        })
+        .then(data => {
+            // 只有在登录成功时才会执行这里
+            messageArea.textContent = "登录成功！欢迎, " + data.username + "！正在跳转...";
+            messageArea.style.color = 'green';
+            // 成功后跳转到管理员后台页面
+            window.location.href = '/admin-dashboard.html';
+        })
+        .catch(error => {
+            // 所有错误（网络错误、登录失败）都会在这里被捕获
+            console.error('登录请求发生错误:', error);
+            messageArea.textContent = error.message || '登录失败，请检查网络或后台服务。';
+            messageArea.style.color = 'red';
+        });
 });

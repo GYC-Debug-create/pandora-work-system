@@ -20,7 +20,7 @@ export default defineConfig({
     proxy: {
       // 配置代理，将API请求转发到后端服务
       '/api': {
-        target: 'https://m1.apifoxmock.com/m1/7165546-6889710-default',
+        target: 'http://localhost:8080',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '')
       }
