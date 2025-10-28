@@ -7,7 +7,7 @@ import request from '@/utils/request'
  */
 export function getRoles() {
     return request({
-        url: '/api/roles', // 对应后端的 @GetMapping("/api/roles")
+        url: '/roles', // 对应后端的 @GetMapping("/api/roles")
         method: 'get'
     })
 }

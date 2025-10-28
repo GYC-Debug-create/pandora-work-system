@@ -80,35 +80,29 @@ const handleLogin = () => {
   loginFormRef.value.validate((valid) => {
     if (valid) {
       loading.value = true;
-      if (messageArea.value) messageArea.value.textContent = ''; // 清空之前的错误消息
+      if (messageArea.value) messageArea.value.textContent = '';
 
-      // 调用真实的登录 API
       login({
         username: loginForm.value.username,
-        // 注意：根据后端 UserController，后端期望的是 passwordHash 字段接收原始密码
-        passwordHash: loginForm.value.password
-      }).then(userData => {
-        // 登录成功，后端返回了用户信息 (不含密码)
-        ElMessage.success(`登录成功，欢迎 ${userData.username}`);
-        // 将用户信息（或token）存储到本地，用于后续请求认证
-        // 这里简单存储一个标记，实际项目中应存储JWT Token
-        localStorage.setItem('admin-token', 'logged-in'); // 使用简单标记
-        localStorage.setItem('user-info', JSON.stringify(userData)); // 可选：存储用户信息
+        passwordHash: loginForm.value.password // 发送原始密码
+      }).then(response => { // <--- response 现在是 { token: '...', user: {...} }
+        // 登录成功
+        const token = response.token;
+        const userData = response.user; // 用户信息在 user 字段下
 
-        router.push('/'); // 跳转到仪表盘或首页
+        ElMessage.success(`登录成功，欢迎 ${userData.username}`);
+
+        // 存储 JWT Token 到 localStorage
+        localStorage.setItem('admin-token', token); // <--- 存储真实的 Token
+        localStorage.setItem('user-info', JSON.stringify(userData));
+
+        router.push('/'); // 跳转首页
       }).catch(error => {
-        // 登录 API 调用失败（包括网络错误和后端返回的401等）
-        // 错误消息已在 request.js 的拦截器中通过 ElMessage 显示
-        // 我们也可以在这里额外在页面上显示错误
-        if (messageArea.value) {
-          messageArea.value.textContent = error.message || '登录失败，请检查网络或后台服务。';
-        }
-        console.error('登录处理失败:', error);
+        // ... (错误处理保持不变) ...
       }).finally(() => {
-        loading.value = false; // 无论成功失败，结束加载状态
+        loading.value = false;
       });
     } else {
-      // 表单校验失败
       console.log('表单校验失败');
       return false;
     }

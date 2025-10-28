@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/company-matters") // API路径与前端对应
+@RequestMapping("/api/company-matters") // API路径与前端对应
 public class CompanyMattersController {
 
     @Autowired

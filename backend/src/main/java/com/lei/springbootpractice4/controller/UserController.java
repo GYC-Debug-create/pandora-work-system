@@ -1,12 +1,17 @@
 package com.lei.springbootpractice4.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page; // 引入Page
+import com.lei.springbootpractice4.config.JwtUtil;
 import com.lei.springbootpractice4.pojo.UsersPojo;
 import com.lei.springbootpractice4.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map; // 引入Map
 
 @RestController
@@ -15,9 +20,11 @@ public class UserController { // 移除类级别的 RequestMapping 或修改
 
     @Autowired
     private UserService userService;
+    @Autowired
+    private JwtUtil jwtUtil;
 
     // POST /user/registerByAdmin (保持不变)
-    @PostMapping("/user/registerByAdmin")
+    @PostMapping("/api/user/registerByAdmin")
     public String registerByAdmin(@RequestBody UsersPojo user) {
         String rawPassword = user.getPasswordHash();
         user.setPasswordHash(rawPassword);
@@ -30,24 +37,33 @@ public class UserController { // 移除类级别的 RequestMapping 或修改
     }
 
     // POST /user/login (保持不变)
-    @PostMapping("/user/login")
+    @PostMapping("/api/user/login")
     public ResponseEntity<Object> login(@RequestBody UsersPojo user) {
         UsersPojo loginUser = userService.login(user.getUsername(), user.getPasswordHash());
         if (loginUser != null) {
             loginUser.setPasswordHash(null);
-            return ResponseEntity.ok(loginUser);
+
+            // 使用 Spring Security 的 UserDetails 对象来生成 Token
+            final UserDetails userDetails = new User(loginUser.getUsername(), "", new ArrayList<>());
+            final String token = jwtUtil.generateToken(userDetails);
+
+            // 构建符合 API 文档的响应
+            Map<String, Object> response = new HashMap<>();
+            response.put("token", token);
+            response.put("user", loginUser);
+
+            return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.status(401).body("登录失败,用户名或密码错误");
         }
     }
-
     // --- 新增API端点 ---
 
     /**
      * 获取用户列表 (支持分页和查询)
      * 前端请求示例: GET /users?pageNum=1&pageSize=10&name=张
      */
-    @GetMapping("/users")
+    @GetMapping("/api/users")
     public ResponseEntity<Page<UsersPojo>> getUserList(@RequestParam Map<String, Object> params) {
         Page<UsersPojo> userPage = userService.getUserList(params);
         return ResponseEntity.ok(userPage);
@@ -72,7 +88,7 @@ public class UserController { // 移除类级别的 RequestMapping 或修改
      * 删除用户
      * 前端请求示例: DELETE /users/uuid-of-user
      */
-    @DeleteMapping("/users/{id}")
+    @DeleteMapping("/api/users/{id}")
     public ResponseEntity<String> deleteUser(@PathVariable String id) {
         boolean success = userService.deleteUser(id);
         if (success) {
