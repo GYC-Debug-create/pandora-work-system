@@ -100,16 +100,20 @@ public class JwtUtil implements Serializable {
     }
 
     /**
-     * 为用户生成 JWT 令牌
-     * @param userDetails Spring Security 的 UserDetails 对象
-     * @return 生成的 JWT 令牌字符串
+     * 为用户生成 JWT 令牌 (原始方法，仅使用 username 作为 subject)
      */
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
-        // 你可以在这里添加额外的 claims，例如用户角色等
-        // claims.put("role", userDetails.getAuthorities()...);
         return doGenerateToken(claims, userDetails.getUsername());
     }
+
+    /**
+     * 为用户生成 JWT 令牌 (重载方法，允许传入额外 Claims)
+     */
+    public String generateToken(Map<String, Object> claims, String subject) {
+        return doGenerateToken(claims, subject);
+    }
+
 
     /**
      * 执行 JWT 令牌的生成
@@ -128,6 +132,9 @@ public class JwtUtil implements Serializable {
                 .setExpiration(new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY * 1000)) // 设置过期时间
                 .signWith(secretKey, SignatureAlgorithm.HS256) // 使用 SecretKey 和 HS512 算法签名
                 .compact();
+    }
+    public String getUserIdFromToken(String token) {
+        return getClaimFromToken(token, claims -> claims.get("userId", String.class));
     }
 
     /**

@@ -37,23 +37,30 @@ public class UserController { // 移除类级别的 RequestMapping 或修改
     }
 
     // POST /user/login (保持不变)
+    // 文件: backend/src/main/java/com/lei/springbootpractice4/controller/UserController.java
     @PostMapping("/api/user/login")
     public ResponseEntity<Object> login(@RequestBody UsersPojo user) {
         UsersPojo loginUser = userService.login(user.getUsername(), user.getPasswordHash());
         if (loginUser != null) {
             loginUser.setPasswordHash(null);
 
-            // 使用 Spring Security 的 UserDetails 对象来生成 Token
+            // --- 修改这里 ---
+            // 创建 UserDetails，仍然使用 username 作为 principal
             final UserDetails userDetails = new User(loginUser.getUsername(), "", new ArrayList<>());
-            final String token = jwtUtil.generateToken(userDetails);
+            // 创建 Claims，包含 userId
+            Map<String, Object> claims = new HashMap<>();
+            claims.put("userId", loginUser.getUserId()); // <--- 添加 userId 到 Claims
+            // 使用包含 Claims 的方法生成 Token (需要修改 JwtUtil)
+            final String token = jwtUtil.generateToken(claims, userDetails.getUsername());
+            // --- 修改结束 ---
 
-            // 构建符合 API 文档的响应
             Map<String, Object> response = new HashMap<>();
             response.put("token", token);
             response.put("user", loginUser);
-
+            System.out.println("登录成功，准备返回 Token 和 User: " + response);
             return ResponseEntity.ok(response);
         } else {
+            System.out.println("登录失败 (UserService 返回 null)，准备返回 401。");
             return ResponseEntity.status(401).body("登录失败,用户名或密码错误");
         }
     }
@@ -73,7 +80,7 @@ public class UserController { // 移除类级别的 RequestMapping 或修改
      * 更新用户信息
      * 前端请求示例: PUT /users/uuid-of-user
      */
-    @PutMapping("/users/{id}")
+    @PutMapping("/api/users/{id}")
     public ResponseEntity<String> updateUser(@PathVariable String id, @RequestBody UsersPojo user) {
         boolean success = userService.updateUser(id, user);
         if (success) {

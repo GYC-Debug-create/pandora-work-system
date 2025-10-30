@@ -18,3 +18,5 @@ spring:
       path: /h2-console
 jwt:
   secret: <REDACTED>
+file:
+  upload-dir: ./uploads/

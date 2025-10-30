@@ -46,24 +46,31 @@ CREATE TABLE tasks (
                        task_type VARCHAR(50),
                        priority VARCHAR(50),
                        status VARCHAR(50),
-                       due_date DATE,
+                       start_date DATE,           -- <--- 新增开始日期
+                       end_date DATE,             -- <--- 新增结束日期 (替代之前的 due_date)
                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- <--- 建议添加 ON UPDATE
                        CONSTRAINT fk_tasks_creator FOREIGN KEY (creator_id) REFERENCES users(user_id),
                        CONSTRAINT fk_tasks_responsible FOREIGN KEY (responsible_person_id) REFERENCES users(user_id)
 );
 
+-- 找到 CREATE TABLE sub_tasks (...) 部分
 CREATE TABLE sub_tasks (
                            sub_task_id INT AUTO_INCREMENT PRIMARY KEY,
                            parent_task_id INT,
                            parent_sub_task_id INT,
+                           creator_id VARCHAR(255),
                            sub_task_name VARCHAR(255) NOT NULL,
                            status VARCHAR(50),
                            assigned_to_id VARCHAR(255),
+                           start_time TIMESTAMP,       -- <--- 新增开始时间
+                           end_time TIMESTAMP,         -- <--- 新增结束时间
                            deliverable_content TEXT,
                            approval_comment TEXT,
                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                            completed_at TIMESTAMP,
+                           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- <--- 建议添加 updated_at
+                           CONSTRAINT fk_subtasks_creator FOREIGN KEY (creator_id) REFERENCES users(user_id),
                            CONSTRAINT fk_subtasks_parent_task FOREIGN KEY (parent_task_id) REFERENCES tasks(task_id),
                            CONSTRAINT fk_subtasks_parent_subtask FOREIGN KEY (parent_sub_task_id) REFERENCES sub_tasks(sub_task_id),
                            CONSTRAINT fk_subtasks_assignee FOREIGN KEY (assigned_to_id) REFERENCES users(user_id)
