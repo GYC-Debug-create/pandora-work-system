@@ -59,8 +59,8 @@ public class ViewServiceImpl implements ViewService {
      */
     @Override
     public List<SubTaskPojo> getWeekViewTasks(String currentUserId, LocalDate dateInWeek) {
-        LocalDate firstDayOfWeek = dateInWeek.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-        LocalDate lastDayOfWeek = dateInWeek.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+        LocalDate firstDayOfWeek = dateInWeek.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
+        LocalDate lastDayOfWeek = dateInWeek.with(TemporalAdjusters.nextOrSame(DayOfWeek.SATURDAY));
         LocalDateTime weekStart = firstDayOfWeek.atStartOfDay();
         LocalDateTime weekEnd = lastDayOfWeek.atTime(LocalTime.MAX);
 

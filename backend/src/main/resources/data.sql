@@ -51,7 +51,7 @@ VALUES (2, '547309c2503d6dd1bec16a200ea14458', '子任务 - 调研竞品 App', '
 
 -- 个人任务 1: 由 xm 创建并分配给自己 (无父任务)
 INSERT INTO sub_tasks (creator_id, sub_task_name, status, assigned_to_id, start_time, end_time)
-VALUES ('575bb55af27cb8d5fb6d31b3aec95acd', '个人任务 - 学习 Vuex', 'TODO', '575bb55af27cb8d5fb6d31b3aec95acd', '2025-11-01T09:00:00', '2025-11-03T12:00:00');
+VALUES ('575bb55af27cb8d5fb6d31b3aec95acd', '个人任务 - 学习 Vuex', 'TODO', '575bb55af27cb8d5fb6d31b3aec95acd', '2025-11-01T09:00:00', '2025-11-01T12:00:00');
 
 -- 在 H2 Console 执行 (如果重启后数据被清空了，需要重新插入):
 INSERT INTO sub_tasks (parent_sub_task_id, parent_task_id, creator_id, sub_task_name, status, assigned_to_id, start_time, end_time)
