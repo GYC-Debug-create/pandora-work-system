@@ -1,17 +1,21 @@
 package com.lei.springbootpractice4.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.lei.springbootpractice4.mapper.RoleMapper;
 import com.lei.springbootpractice4.mapper.SubTaskMapper;
 import com.lei.springbootpractice4.mapper.TaskMapper; // 需要 TaskMapper 校验 parentTaskId
 import com.lei.springbootpractice4.mapper.UserMapper; // 需要 UserMapper 校验 assignedToId
+import com.lei.springbootpractice4.pojo.RolePojo;
 import com.lei.springbootpractice4.pojo.SubTaskPojo;
 import com.lei.springbootpractice4.pojo.TaskPojo; // 需要 TaskPojo
+import com.lei.springbootpractice4.pojo.UsersPojo;
 import com.lei.springbootpractice4.service.SubTaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional; // 引入事务
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -26,6 +30,9 @@ public class SubTaskServiceImpl implements SubTaskService {
 
     @Autowired
     private UserMapper userMapper; // 注入 UserMapper
+
+    @Autowired
+    private RoleMapper roleMapper;
 
     @Override
     @Transactional
@@ -295,4 +302,133 @@ public class SubTaskServiceImpl implements SubTaskService {
             }
         }
     }
+
+
+    @Override
+    public SubTaskPojo getSubTaskById(Integer subTaskId, UsersPojo currentUser) {
+        SubTaskPojo subTask = subTaskMapper.selectById(subTaskId);
+        if (subTask == null) {
+            throw new IllegalArgumentException("子任务不存在: ID " + subTaskId);
+        }
+
+        // 1. 权限校验
+        if (!hasPermissionToViewSubTask(subTask, currentUser)) {
+            throw new SecurityException("无权查看该子任务详情");
+        }
+
+        // 2. 填充创建者和负责人的名字
+        fillNames(subTask);
+
+        // 3. 递归加载所有子孙任务
+        loadChildrenRecursive(subTask);
+
+        return subTask;
+    }
+
+    // --- 辅助方法：检查查看权限 ---
+    private boolean hasPermissionToViewSubTask(SubTaskPojo subTask, UsersPojo currentUser) {
+        if (subTask == null || currentUser == null) return false;
+
+        RolePojo userRole = roleMapper.selectById(currentUser.getRoleId());
+        String roleName = (userRole != null) ? userRole.getRoleName() : "EMPLOYEE";
+        String currentUserId = currentUser.getUserId();
+
+        // 1. 管理员/创始人
+        if ("ADMIN".equals(roleName) || "FOUNDER".equals(roleName)) {
+            return true;
+        }
+
+        // 2. 任务负责人 (Assignee)
+        if (Objects.equals(currentUserId, subTask.getAssignedToId())) {
+            return true;
+        }
+
+        // 3. 任务创建者 (Creator)
+        if (Objects.equals(currentUserId, subTask.getCreatorId())) {
+            return true;
+        }
+
+        // 4. 父主任务的负责人 (Team Lead)
+        if (subTask.getParentTaskId() != null) {
+            TaskPojo parentTask = taskMapper.selectById(subTask.getParentTaskId());
+            if (parentTask != null && Objects.equals(currentUserId, parentTask.getResponsiblePersonId())) {
+                return true;
+            }
+        }
+
+        // TODO: 还可以根据需求添加更复杂的权限，比如部门领导
+
+        return false; // 默认无权限
+    }
+
+    // --- 辅助方法：递归加载子任务 ---
+    private void loadChildrenRecursive(SubTaskPojo parentSubTask) {
+        if (parentSubTask == null) return;
+
+        QueryWrapper<SubTaskPojo> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("parent_sub_task_id", parentSubTask.getSubTaskId());
+        // queryWrapper.orderByAsc("start_time"); // (可选) 按开始时间排序
+
+        List<SubTaskPojo> children = subTaskMapper.selectList(queryWrapper);
+
+        if (children == null || children.isEmpty()) {
+            parentSubTask.setChildren(Collections.emptyList()); // 设置为空列表而不是 null
+            return;
+        }
+
+        // 遍历所有子任务
+        for (SubTaskPojo child : children) {
+            // 填充子任务的名字
+            fillNames(child);
+            // 递归调用，为子任务加载它们的子任务
+            loadChildrenRecursive(child);
+        }
+
+        // 将填充好孙任务的子任务列表设置回父级
+        parentSubTask.setChildren(children);
+    }
+
+    // 确保 fillNames 辅助方法存在
+    private void fillNames(SubTaskPojo subTask) {
+        if (subTask == null) return;
+        if (subTask.getAssignedToId() != null && subTask.getAssignedToName() == null) {
+            UsersPojo assignedUser = userMapper.selectById(subTask.getAssignedToId());
+            if (assignedUser != null) {
+                subTask.setAssignedToName(assignedUser.getFullName() != null ? assignedUser.getFullName() : assignedUser.getUsername());
+            }
+        }
+        if (subTask.getCreatorId() != null && subTask.getCreatorName() == null) {
+            UsersPojo creatorUser = userMapper.selectById(subTask.getCreatorId());
+            if (creatorUser != null) {
+                subTask.setCreatorName(creatorUser.getFullName() != null ? creatorUser.getFullName() : creatorUser.getUsername());
+            }
+        }
+    }
+
+    private void loadDirectChildren(SubTaskPojo parentSubTask) {
+        if (parentSubTask == null) return;
+
+        QueryWrapper<SubTaskPojo> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("parent_sub_task_id", parentSubTask.getSubTaskId());
+
+        List<SubTaskPojo> children = subTaskMapper.selectList(queryWrapper);
+
+        if (children == null || children.isEmpty()) {
+            parentSubTask.setChildren(Collections.emptyList());
+            return;
+        }
+
+        // 遍历所有直接子任务
+        for (SubTaskPojo child : children) {
+            // 填充子任务的名字
+            fillNames(child);
+            // (可选) 明确设置孙任务列表为空，表示不再加载
+            child.setChildren(Collections.emptyList());
+            // 移除了这里的递归调用: loadChildrenRecursive(child);
+        }
+
+        parentSubTask.setChildren(children);
+    }
+
+
 }

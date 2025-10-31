@@ -1,7 +1,9 @@
 package com.lei.springbootpractice4.controller;
 
 import com.lei.springbootpractice4.config.JwtUtil;
+import com.lei.springbootpractice4.mapper.UserMapper;
 import com.lei.springbootpractice4.pojo.SubTaskPojo;
+import com.lei.springbootpractice4.pojo.UsersPojo;
 import com.lei.springbootpractice4.service.SubTaskService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +24,46 @@ public class SubTaskController {
 
     @Autowired // 注入 JwtUtil
     private JwtUtil jwtUtil;
+    @Autowired
+    private UserMapper userMapper; // <--- 注入 UserMapper
+
+    @GetMapping("/{subTaskId}")
+    public ResponseEntity<Object> getSubTaskById(
+            @PathVariable Integer subTaskId,
+            HttpServletRequest request) {
+        try {
+            // 1. 获取当前登录用户的完整信息 (用于权限判断)
+            UsersPojo currentUser = getCurrentUser(request);
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "无效的用户凭证"));
+            }
+
+            // 2. 调用 Service 获取任务详情
+            SubTaskPojo subTask = subTaskService.getSubTaskById(subTaskId, currentUser);
+            return ResponseEntity.ok(subTask);
+
+        } catch (IllegalArgumentException e) { // 子任务不存在
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        } catch (SecurityException e) { // 无权限
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("获取子任务详情失败: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "获取详情失败"));
+        }
+    }
+
+
+
+    // --- 辅助方法：获取当前用户的完整 Pojo ---
+    private UsersPojo getCurrentUser(HttpServletRequest request) {
+        String userId = getUserIdFromRequest(request);
+        if (userId != null) {
+            // 从数据库获取用户的完整信息，包括 roleId 和 departmentId
+            return userMapper.selectById(userId);
+        }
+        return null;
+    }
 
     @PostMapping("/{subTaskId}/complete")
     public ResponseEntity<Object> completeSubTask(
