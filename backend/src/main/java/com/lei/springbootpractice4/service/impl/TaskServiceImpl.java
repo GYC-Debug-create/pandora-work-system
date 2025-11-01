@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lei.springbootpractice4.mapper.*; // 引入所有需要的 Mapper
 import com.lei.springbootpractice4.pojo.*; // 引入所有需要的 Pojo
+import com.lei.springbootpractice4.service.LogService;
 import com.lei.springbootpractice4.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,8 @@ public class TaskServiceImpl implements TaskService {
     private RoleMapper roleMapper; // <--- 注入 RoleMapper
     @Autowired
     private SubTaskMapper subTaskMapper; // <--- 注入 SubTaskMapper
+    @Autowired
+    private LogService logService; // <--- 注入 LogService
 
     // --- createTask 和 addMembersToTask 方法保持不变 ---
     @Override
@@ -58,8 +61,11 @@ public class TaskServiceImpl implements TaskService {
         if (task.getStartDate() != null && task.getEndDate() != null && task.getStartDate().isAfter(task.getEndDate())) {
             throw new IllegalArgumentException("任务开始日期不能晚于结束日期");
         }
+
         taskMapper.insert(task);
+        UsersPojo creator = userMapper.selectById(creatorId);
         fillTaskNames(task); // 填充名字
+        logService.logTaskActivity(creator, task, "TASK_CREATED", "创建了");
         return task;
     }
 
@@ -75,17 +81,27 @@ public class TaskServiceImpl implements TaskService {
         if (userIds == null || userIds.isEmpty()) throw new IllegalArgumentException("成员列表 (userIds) 不能为空");
 
         LocalDateTime now = LocalDateTime.now();
+        int insertedCount = 0; // 假设您计算了实际添加的数量
         for (String userId : userIds) {
             if (userMapper.selectById(userId) == null) throw new IllegalArgumentException("用户ID '" + userId + "' 不存在");
             QueryWrapper<TaskMemberPojo> existCheck = new QueryWrapper<>();
             existCheck.eq("task_id", taskId).eq("user_id", userId);
             if (taskMemberMapper.selectCount(existCheck) == 0) {
                 taskMemberMapper.insert(new TaskMemberPojo(taskId, userId, now));
+                insertedCount++;
             }
         }
         task.setStatus("IN_PROGRESS");
         task.setUpdatedAt(LocalDateTime.now());
         taskMapper.updateById(task);
+
+        /*添加日志*/
+        if (insertedCount > 0) {
+            UsersPojo currentUser = userMapper.selectById(currentUserId);
+            // (可以优化：获取成员名字列表)
+            String suffix = String.format("为任务添加了 %d 名成员", insertedCount);
+            logService.logTaskActivity(currentUser, task, "MEMBERS_ADDED", suffix);
+        }
         return true;
     }
 
@@ -260,6 +276,7 @@ public class TaskServiceImpl implements TaskService {
         }
 
         taskMapper.updateById(taskToUpdate); // updateById 会自动忽略 null 字段
+        logService.logTaskActivity(currentUser, existingTask, "TASK_UPDATED", "更新了");
 
         // 3. 返回更新后的完整数据
         return getTaskById(taskId, currentUser); // 调用详情接口获取最新数据
