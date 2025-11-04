@@ -7,7 +7,7 @@ import request from '@/utils/request'
  */
 export function getDepartments() {
     return request({
-        url: '/departments', // 对应后端的 @GetMapping("/api/departments")
+        url: '/api/departments',
         method: 'get'
     })
     // 期望返回 DepartmentPojo 数组 [{ departmentId: 1, departmentName: '技术部' }, ...]

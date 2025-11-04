@@ -8,9 +8,9 @@ import request from '@/utils/request' // 引入配置好的 Axios 实例
  */
 export function login(data) {
   return request({
-    url: '/user/login', // 对应后端的 @PostMapping("/login")
+    url: '/api/user/login',
     method: 'post',
-    data // axios会自动将JS对象转为JSON字符串
+    data
   })
 }
 
@@ -20,13 +20,11 @@ export function login(data) {
  * @returns {Promise}
  */
 export function getUserList(params) {
-  // 假设后端接口为 GET /users
   return request({
-    url: '/users', // <<--- 后端需要实现此 GET 接口
+    url: '/api/users',
     method: 'get',
-    params // GET请求的参数放在params里
+    params
   })
-  // 注意：前端期望返回 { data: [...], total: xx } 格式
 }
 
 /**
@@ -36,7 +34,7 @@ export function getUserList(params) {
  */
 export function createUser(data) {
   return request({
-    url: '/user/registerByAdmin', // 对应后端的 @PostMapping("/registerByAdmin")
+    url: '/api/user/registerByAdmin',
     method: 'post',
     data
   })
@@ -52,9 +50,8 @@ export function createUser(data) {
  * @returns {Promise}
  */
 export function updateUser(id, data) {
-  // 假设后端接口为 PUT /users/{id}
   return request({
-    url: `/users/${id}`, // <<--- 后端需要实现此 PUT 接口
+    url: `/api/users/${id}`,
     method: 'put',
     data
   })
@@ -66,9 +63,8 @@ export function updateUser(id, data) {
  * @returns {Promise}
  */
 export function deleteUser(id) {
-  // 假设后端接口为 DELETE /users/{id}
   return request({
-    url: `/users/${id}`, // <<--- 后端需要实现此 DELETE 接口
+    url: `/api/users/${id}`,
     method: 'delete'
   })
 }

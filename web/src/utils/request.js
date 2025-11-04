@@ -3,7 +3,7 @@ import axios from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const service = axios.create({
-  baseURL: '/api',
+  baseURL: '', // 后端接口已经包含/api前缀，这里不需要baseURL
   timeout: 10000
 })
 

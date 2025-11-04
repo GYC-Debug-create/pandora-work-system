@@ -54,7 +54,7 @@ import request from '@/utils/request'; // <--- 确保引入了真实的 request 
 // (注意：这里直接使用 request，不再需要包裹在 api 对象里)
 const getTasks = (params = {}) => {
   return request({
-    url: '/company-matters', // 对应 CompanyMattersController 的 @GetMapping
+    url: '/api/company-matters',
     method: 'get',
     params
   });
@@ -62,7 +62,7 @@ const getTasks = (params = {}) => {
 
 const createTask = (data) => {
   return request({
-    url: '/company-matters', // 对应 @PostMapping
+    url: '/api/company-matters',
     method: 'post',
     data
   });
@@ -70,7 +70,7 @@ const createTask = (data) => {
 
 const updateTask = (id, data) => {
   return request({
-    url: `/company-matters/${id}`, // 对应 @PutMapping("/{id}")
+    url: `/api/company-matters/${id}`,
     method: 'put',
     data
   });
@@ -78,7 +78,7 @@ const updateTask = (id, data) => {
 
 const deleteTask = (id) => {
   return request({
-    url: `/company-matters/${id}`, // 对应 @DeleteMapping("/{id}")
+    url: `/api/company-matters/${id}`,
     method: 'delete'
   });
 };

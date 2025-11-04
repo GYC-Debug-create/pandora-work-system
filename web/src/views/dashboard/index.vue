@@ -25,7 +25,7 @@
               </div>
             </template>
             <div class="card-body">
-              <div class="card-value">{{ userStats.roles['部门老总'] || 0 }}</div>
+              <div class="card-value">{{ userStats.roles['DEPARTMENT_HEAD'] || 0 }}</div>
               <div class="card-footer">
                 <span>部门老总数量</span>
               </div>
@@ -93,14 +93,13 @@ const activities = computed(() => logStore.logs)
 const fetchUserStats = async () => {
   try {
     const response = await getUserList({ pageNum: 1, pageSize: 100 })
-    // 增加严格的数组类型检查，确保健壮性
-    const userListFromApi = response.data || []
-    const users = Array.isArray(userListFromApi) ? userListFromApi : []
+    // 后端返回的是 MyBatis-Plus 的 Page 对象：{ records: [...], total: xx }
+    const users = Array.isArray(response?.records) ? response.records : []
     
-    userStats.value.total = users.length
+    userStats.value.total = response?.total || users.length
     
     const rolesCount = users.reduce((acc, user) => {
-      acc[user.role] = (acc[user.role] || 0) + 1
+      acc[user.roleName] = (acc[user.roleName] || 0) + 1
       return acc
     }, {})
     userStats.value.roles = rolesCount
