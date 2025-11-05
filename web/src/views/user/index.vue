@@ -252,6 +252,7 @@ const fetchDepartments = () => {
   }).catch(error => {
     console.error('获取部门列表失败:', error);
     ElMessage.error('无法加载部门列表');
+    logStore.addLog('获取部门列表失败', 'error');
   });
 };
 
@@ -268,6 +269,7 @@ const fetchRoles = () => {
   }).catch(error => {
     console.error('获取角色列表失败:', error);
     ElMessage.error('无法加载角色列表');
+    logStore.addLog('获取角色列表失败', 'error');
   });
 };
 

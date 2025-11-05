@@ -54,8 +54,10 @@ import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus'; // ElMessage 用于成功提示
 import { User, Lock } from '@element-plus/icons-vue';
 import { login } from '@/api/user'; // <--- 引入真实的 login API
+import { useLogStore } from '@/store/log'; // 引入日志 store
 
 const router = useRouter();
+const logStore = useLogStore(); // 获取日志 store
 const loginFormRef = ref(null);
 const loading = ref(false);
 const messageArea = ref(null); // 用于显示错误信息
@@ -95,6 +97,9 @@ const handleLogin = () => {
         // 存储 JWT Token 到 localStorage
         localStorage.setItem('admin-token', token); // <--- 存储真实的 Token
         localStorage.setItem('user-info', JSON.stringify(userData));
+
+        // 记录系统日志
+        logStore.addLog(`用户 ${userData.username} 登录系统`, 'system');
 
         router.push('/'); // 跳转首页
       }).catch(error => {
