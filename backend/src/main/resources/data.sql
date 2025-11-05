@@ -11,16 +11,16 @@ INSERT INTO departments (department_name) VALUES ('技术部'), ('市场部'), (
 
 
 -- Insert a default administrator user (password: adminpassword)
-INSERT INTO users (user_id, username, password_hash, email, full_name, role_id, department_id, mbti_type) VALUES
-    ('admin-uuid-placeholder', 'admin', '$2a$12$9eUrTf/kqVmXp7AlpMjBjuR43SI1nuMRmkKDG7hxBTku1TRKj96pu', null, '管理员', (SELECT role_id FROM roles WHERE role_name = 'ADMIN'), null, null);
+INSERT INTO users (user_id, username, password_hash, email, full_name, role_id, department_id, mbti_type, status) VALUES
+    ('admin-uuid-placeholder', 'admin', '$2a$12$9eUrTf/kqVmXp7AlpMjBjuR43SI1nuMRmkKDG7hxBTku1TRKj96pu', null, '管理员', (SELECT role_id FROM roles WHERE role_name = 'ADMIN'), null, null, '活跃');
 
 -- Insert an employee user 'xm' (password: 1)
-INSERT INTO users (user_id, username, password_hash, email, full_name, role_id, department_id, mbti_type) VALUES
-    ('575bb55af27cb8d5fb6d31b3aec95acd', 'xm', '$2a$10$/uuFNhwZbaZ4MEP4Oq9ukOAG.DVAlCC5yaLp0OJsWzmVXWJ.LIe62', 'user-f2ee3018@example.invalid', '小明', (SELECT role_id FROM roles WHERE role_name = 'EMPLOYEE'), (SELECT department_id FROM departments WHERE department_name = '技术部'), 'INTP');
+INSERT INTO users (user_id, username, password_hash, email, full_name, role_id, department_id, mbti_type, status) VALUES
+    ('575bb55af27cb8d5fb6d31b3aec95acd', 'xm', '$2a$10$/uuFNhwZbaZ4MEP4Oq9ukOAG.DVAlCC5yaLp0OJsWzmVXWJ.LIe62', 'user-f2ee3018@example.invalid', '小明', (SELECT role_id FROM roles WHERE role_name = 'EMPLOYEE'), (SELECT department_id FROM departments WHERE department_name = '技术部'), 'INTP', '活跃');
 
 -- Insert a team lead user 'xz' (password: 1)
-INSERT INTO users (user_id, username, password_hash, email, full_name, role_id, department_id, mbti_type) VALUES
-    ('547309c2503d6dd1bec16a200ea14458', 'xz', '$2a$10$/uuFNhwZbaZ4MEP4Oq9ukOAG.DVAlCC5yaLp0OJsWzmVXWJ.LIe62', 'user-236d5cf4@example.invalid', '小张', (SELECT role_id FROM roles WHERE role_name = 'TEAM_LEAD'), (SELECT department_id FROM departments WHERE department_name = '技术部'), 'INTJ');
+INSERT INTO users (user_id, username, password_hash, email, full_name, role_id, department_id, mbti_type, status) VALUES
+    ('547309c2503d6dd1bec16a200ea14458', 'xz', '$2a$10$/uuFNhwZbaZ4MEP4Oq9ukOAG.DVAlCC5yaLp0OJsWzmVXWJ.LIe62', 'user-236d5cf4@example.invalid', '小张', (SELECT role_id FROM roles WHERE role_name = 'TEAM_LEAD'), (SELECT department_id FROM departments WHERE department_name = '技术部'), 'INTJ', '活跃');
 
 -- --- 新增测试数据 ---
 

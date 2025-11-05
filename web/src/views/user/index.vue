@@ -284,6 +284,7 @@ const getList = () => {
     loading.value = false;
   }).catch((error) => {
     console.error('获取用户列表失败:', error);
+    logStore.addLog('获取用户列表失败', 'error');
     userList.value = []; // 清空列表以防显示旧数据
     total.value = 0;
     loading.value = false;
@@ -381,7 +382,9 @@ const handleDelete = (row) => {
       getList();
       ElMessage({ type: 'success', message: '删除成功!' });
       logStore.addLog(`删除了用户 "${row.username}" (ID: ${row.userId})`);
-    }).catch(error => { /* request.js 已处理 */ });
+    }).catch(error => { 
+      logStore.addLog(`删除用户 "${row.username}" 失败`, 'error');
+    });
   }).catch(() => {
     ElMessage({ type: 'info', message: '已取消删除' });
   });
@@ -401,7 +404,7 @@ const submitForm = () => {
         mbtiType: userForm.value.mbtiType,
         departmentId: userForm.value.departmentId,
         roleId: userForm.value.roleId, // 发送 roleId
-        // status: userForm.value.status // 后端 UsersPojo 无此字段，暂不发送
+        status: userForm.value.status // 发送 status 字段
       };
 
       let apiCall;
@@ -428,7 +431,10 @@ const submitForm = () => {
         ElMessage({ type: 'success', message: successMsg });
         logStore.addLog(actionLog);
         dialogVisible.value = false;
-      }).catch(error => { /* request.js 已处理 */ });
+      }).catch(error => { 
+        const action = isEdit ? '更新' : '创建';
+        logStore.addLog(`${action}用户 "${dataToSend.username}" 失败`, 'error');
+      });
 
     } else {
       console.log('表单校验失败');

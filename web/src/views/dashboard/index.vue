@@ -302,14 +302,18 @@ const handleClearAll = () => {
 // 导出CSV
 const handleExportCSV = () => {
   const logsToExport = isFilterActive.value ? filteredActivities.value : null
+  const count = logsToExport ? logsToExport.length : logStore.logs.length
   logStore.exportToCSV(logsToExport)
+  logStore.addLog(`导出了 ${count} 条日志为 CSV 格式`, 'system')
   ElMessage.success('导出成功')
 }
 
 // 导出JSON
 const handleExportJSON = () => {
   const logsToExport = isFilterActive.value ? filteredActivities.value : null
+  const count = logsToExport ? logsToExport.length : logStore.logs.length
   logStore.exportToJSON(logsToExport)
+  logStore.addLog(`导出了 ${count} 条日志为 JSON 格式`, 'system')
   ElMessage.success('导出成功')
 }
 
@@ -359,6 +363,7 @@ const fetchUserStats = async () => {
     userStats.value.roles = rolesCount
   } catch (error) {
     console.error("获取用户数据失败:", error)
+    logStore.addLog('获取仪表盘统计数据失败', 'error')
   }
 }
 

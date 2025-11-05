@@ -133,11 +133,11 @@ public class UserServiceImpl implements UserService {
                 }
             }
 
-            // 设置状态 (当前硬编码，后续可从数据库读取或根据逻辑判断)
-            user.setStatus("活跃");
-
-            // 确保 createdAt 字段有值 (MyBatis Plus 应该会自动填充，这里做个检查)
-            // if (user.getCreatedAt() == null) { user.setCreatedAt(LocalDateTime.now()); }
+            // status 字段已经从数据库读取，无需再设置
+            // 如果数据库中 status 为 null，设置默认值
+            if (user.getStatus() == null) {
+                user.setStatus("活跃");
+            }
 
         });
         System.out.println("Returning " + userPage.getTotal() + " users."); // 增加日志

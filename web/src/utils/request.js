@@ -2,6 +2,14 @@
 import axios from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
+// 用于存储日志函数的引用（避免循环依赖）
+let logStoreAddLog = null
+
+// 导出设置日志函数的方法
+export const setLogStore = (addLogFn) => {
+  logStoreAddLog = addLogFn
+}
+
 const service = axios.create({
   baseURL: '', // 后端接口已经包含/api前缀，这里不需要baseURL
   timeout: 10000
@@ -38,6 +46,11 @@ service.interceptors.response.use(
         message = typeof error.response.data === 'string' ? error.response.data : (error.response.data?.message || error.message);
 
         if (error.response.status === 401) {
+          // 记录会话过期日志
+          if (logStoreAddLog) {
+            logStoreAddLog('会话已过期，用户被强制登出', 'system')
+          }
+          
           // 处理 401 未授权错误
           ElMessageBox.confirm('会话已过期或无效，请重新登录', '确认', {
             confirmButtonText: '重新登录',
@@ -60,6 +73,10 @@ service.interceptors.response.use(
 
       } else if (error.request) {
         message = '网络错误，无法连接到服务器';
+        // 记录网络错误日志
+        if (logStoreAddLog) {
+          logStoreAddLog('网络请求超时，无法连接到服务器', 'error')
+        }
         ElMessage({ message: message, type: 'error', duration: 5 * 1000 });
       } else {
         message = error.message;

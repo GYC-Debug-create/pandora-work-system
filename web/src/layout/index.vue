@@ -52,10 +52,12 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import Sidebar from './components/Sidebar.vue'
 import Breadcrumb from './components/Breadcrumb.vue'
 import ProfileModal from './components/ProfileModal.vue'
+import { useLogStore } from '@/store/log'
 
 const isCollapse = ref(false)
 const router = useRouter()
 const profileModalVisible = ref(false)
+const logStore = useLogStore()
 
 const toggleSidebar = () => {
   isCollapse.value = !isCollapse.value
@@ -68,8 +70,16 @@ const handleCommand = (command) => {
       cancelButtonText: '取消',
       type: 'warning',
     }).then(() => {
-      // 模拟退出登录
+      // 获取用户信息
+      const userInfo = JSON.parse(localStorage.getItem('user-info') || '{}')
+      const username = userInfo.username || '用户'
+      
+      // 记录登出日志
+      logStore.addLog(`用户 ${username} 退出系统`, 'system')
+      
+      // 退出登录
       localStorage.removeItem('admin-token')
+      localStorage.removeItem('user-info')
       router.push('/login')
       ElMessage.success('已成功退出登录')
     }).catch(() => {

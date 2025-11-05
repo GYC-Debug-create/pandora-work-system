@@ -20,6 +20,7 @@ public class UsersPojo {
     private String mbtiType;
     private Integer departmentId;
     private Integer roleId; // 确保是 Integer
+    private String status; // 用户状态：活跃/禁用
     private LocalDateTime createdAt; // 添加创建时间字段
 
     // --- 新增用于前端展示的字段 ---
@@ -28,7 +29,4 @@ public class UsersPojo {
 
     @TableField(exist = false)
     private String departmentName;
-
-    @TableField(exist = false)
-    private String status = "活跃"; // 暂时硬编码为 "活跃"
 }

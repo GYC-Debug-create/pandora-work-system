@@ -30,6 +30,7 @@ CREATE TABLE users (
                        role_id INT,
                        department_id INT,
                        mbti_type VARCHAR(50),
+                       status VARCHAR(20) DEFAULT '活跃',
                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                        CONSTRAINT fk_users_role FOREIGN KEY (role_id) REFERENCES roles(role_id),
                        CONSTRAINT fk_users_department FOREIGN KEY (department_id) REFERENCES departments(department_id)

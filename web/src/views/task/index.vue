@@ -121,6 +121,7 @@ const getTaskList = () => {
     loading.value = false;
   }).catch(error => {
     console.error('获取事项列表失败:', error);
+    logStore.addLog('获取事项列表失败', 'error');
     ElMessage.error('获取事项列表失败');
     taskList.value = []; // 清空列表
     loading.value = false;
@@ -186,7 +187,7 @@ const submitForm = () => {
       dialogVisible.value = false;
     }).catch(error => {
       console.error(`${action}事项失败:`, error);
-      // 错误消息已由 request.js 处理
+      logStore.addLog(`${action}事项 "${dataToSend.title}" 失败`, 'error');
     });
   });
 };
@@ -204,7 +205,7 @@ const handleDeleteTask = (row) => {
       ElMessage.success('删除成功');
     }).catch(error => {
       console.error('删除事项失败:', error);
-      // 错误消息已由 request.js 处理
+      logStore.addLog(`删除事项 "${row.title}" 失败`, 'error');
     });
   }).catch(() => {
     ElMessage.info('已取消删除');
