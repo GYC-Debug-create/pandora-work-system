@@ -29,4 +29,7 @@ public class UsersPojo {
 
     @TableField(exist = false)
     private String departmentName;
+
+    @TableField(exist = false)
+    private String status = "活跃"; // 暂时硬编码为 "活跃"
 }
