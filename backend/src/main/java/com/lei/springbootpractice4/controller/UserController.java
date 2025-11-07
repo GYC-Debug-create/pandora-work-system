@@ -25,14 +25,25 @@ public class UserController { // 移除类级别的 RequestMapping 或修改
 
     // POST /user/registerByAdmin (保持不变)
     @PostMapping("/api/user/registerByAdmin")
-    public String registerByAdmin(@RequestBody UsersPojo user) {
-        String rawPassword = user.getPasswordHash();
-        user.setPasswordHash(rawPassword);
-        boolean registSuccess = userService.registerByAdmin(user);
-        if (registSuccess) {
-            return "用户创建成功";
-        } else {
-            return "创建失败, 用户名已存在";
+    public ResponseEntity<String> registerByAdmin(@RequestBody UsersPojo user) {
+        try {
+            String rawPassword = user.getPasswordHash();
+            user.setPasswordHash(rawPassword);
+            boolean registSuccess = userService.registerByAdmin(user);
+            if (registSuccess) {
+                return ResponseEntity.ok("用户创建成功");
+            } else {
+                return ResponseEntity.badRequest().body("创建失败, 用户名已存在");
+            }
+        } catch (org.springframework.dao.DuplicateKeyException e) {
+            // 处理邮箱或其他唯一性约束冲突
+            if (e.getMessage().contains("EMAIL")) {
+                return ResponseEntity.badRequest().body("创建失败, 该邮箱已被使用");
+            } else {
+                return ResponseEntity.badRequest().body("创建失败, 数据重复");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("创建失败, 系统错误: " + e.getMessage());
         }
     }
 
