@@ -2,9 +2,13 @@ package com.lei.springbootpractice4.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page; // 引入Page
 import com.lei.springbootpractice4.config.JwtUtil;
+import com.lei.springbootpractice4.mapper.RoleMapper;
+import com.lei.springbootpractice4.mapper.UserMapper;
 import com.lei.springbootpractice4.pojo.UsersPojo;
 import com.lei.springbootpractice4.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,6 +26,10 @@ public class UserController { // 移除类级别的 RequestMapping 或修改
     private UserService userService;
     @Autowired
     private JwtUtil jwtUtil;
+    @Autowired
+    private RoleMapper roleMapper; // <--- 注入 RoleMapper
+    @Autowired
+    private UserMapper userMapper; // <--- 注入 UserMapper (用于辅助方法)
 
     // POST /user/registerByAdmin (保持不变)
     @PostMapping("/api/user/registerByAdmin")
@@ -115,5 +123,114 @@ public class UserController { // 移除类级别的 RequestMapping 或修改
             // 可以更细化错误，例如返回404 Not Found 或 403 Forbidden
             return ResponseEntity.badRequest().body("删除失败，用户可能不存在或不允许删除");
         }
+    }
+
+    @PostMapping("/api/user/change-password")
+    public ResponseEntity<Object> changePassword(
+            @RequestBody Map<String, String> payload,
+            HttpServletRequest request) {
+
+        String oldPassword = payload.get("oldPassword");
+        String newPassword = payload.get("newPassword");
+        if (oldPassword == null || newPassword == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "请求体必须包含 oldPassword 和 newPassword"));
+        }
+
+        try {
+            String currentUserId = getUserIdFromRequest(request);
+            if (currentUserId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "无效的用户凭证"));
+            }
+
+            boolean success = userService.changePassword(currentUserId, oldPassword, newPassword);
+            if (success) {
+                return ResponseEntity.ok(Map.of("message", "密码修改成功"));
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "密码修改失败"));
+            }
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "服务器内部错误"));
+        }
+    }
+
+    /**
+     * 修改当前用户 MBTI
+     */
+    @PutMapping("/api/user/mbti")
+    public ResponseEntity<Object> changeMbti(
+            @RequestBody Map<String, String> payload,
+            HttpServletRequest request) {
+
+        String newMbti = payload.get("mbti");
+        try {
+            String currentUserId = getUserIdFromRequest(request);
+            if (currentUserId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "无效的用户凭证"));
+            }
+
+            boolean success = userService.changeMbti(currentUserId, newMbti);
+            if (success) {
+                return ResponseEntity.ok(Map.of("message", "MBTI更新成功"));
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "MBTI更新失败"));
+            }
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "服务器内部错误"));
+        }
+    }
+
+    /**
+     * 修改当前用户名
+     */
+    @PutMapping("/api/user/username")
+    public ResponseEntity<Object> changeUsername(
+            @RequestBody Map<String, String> payload,
+            HttpServletRequest request) {
+
+        String newUsername = payload.get("username");
+        try {
+            String currentUserId = getUserIdFromRequest(request);
+            if (currentUserId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "无效的用户凭证"));
+            }
+
+            boolean success = userService.changeUsername(currentUserId, newUsername);
+            if (success) {
+                // 注意：用户名修改成功后，当前 Token 中的 'sub' 字段 (用户名) 已过期
+                // 最好是返回一个新的 Token，或者提示用户重新登录
+                return ResponseEntity.ok(Map.of("message", "用户名修改成功，请重新登录以更新凭证"));
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "用户名修改失败"));
+            }
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "服务器内部错误"));
+        }
+    }
+
+
+    // --- 辅助方法：从 Token 获取 UserId ---
+    private String getUserIdFromRequest(HttpServletRequest request) {
+        final String requestTokenHeader = request.getHeader("Authorization");
+        String currentUserId = null;
+        if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
+            String jwtToken = requestTokenHeader.substring(7);
+            try {
+                currentUserId = jwtUtil.getUserIdFromToken(jwtToken);
+            } catch (Exception e) {
+                System.err.println("从Token获取userId失败: " + e.getMessage());
+            }
+        }
+        return currentUserId;
     }
 }

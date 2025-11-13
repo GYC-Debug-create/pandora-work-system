@@ -16,6 +16,10 @@ spring:
     console:
       enabled: true
       path: /h2-console
+  servlet:
+    multipart:
+      max-file-size: 100MB      # 单个文件最大大小 (您可以根据需求修改，如 50MB, 100MB)
+      max-request-size: 100MB
 jwt:
   secret: <REDACTED>
 file:

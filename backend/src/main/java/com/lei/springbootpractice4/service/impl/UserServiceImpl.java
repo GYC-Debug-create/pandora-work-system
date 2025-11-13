@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils; // 引入StringUtils
 
 import java.util.Map; // 引入Map
+import java.util.Objects;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -25,8 +26,11 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private RoleMapper roleMapper;
 
-    @Autowired // 注入 DepartmentMapper
-    private DepartmentMapper departmentMapper;
+
+    @Autowired
+    private DepartmentMapper departmentMapper; // <--- 用于查询部门名称
+
+
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -54,6 +58,24 @@ public class UserServiceImpl implements UserService {
             // 查询关联的角色和部门信息 (如果需要返回给前端)
             // user.setRole(...)
             // user.setDepartment(...)
+            if (user.getRoleId() != null) {
+                RolePojo role = roleMapper.selectById(user.getRoleId());
+                if (role != null) {
+                    user.setRoleName(role.getRoleName());
+                } else {
+                    user.setRoleName("未知角色"); // 或者 null
+                }
+            }
+
+            // 2. 填充部门名称
+            if (user.getDepartmentId() != null) {
+                DepartmentPojo department = departmentMapper.selectById(user.getDepartmentId());
+                if (department != null) {
+                    user.setDepartmentName(department.getDepartmentName());
+                } else {
+                    user.setDepartmentName("未知部门"); // 或者 null
+                }
+            }
             return user; // Password matches
         } else {
             return null; // User not found or password incorrect
@@ -169,5 +191,70 @@ public class UserServiceImpl implements UserService {
             return deletedRows > 0;
         }
         return false; // 用户不存在
+    }
+    @Override
+    public boolean changePassword(String userId, String oldPassword, String newPassword) {
+        // 1. 获取当前用户
+        UsersPojo user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new IllegalArgumentException("用户不存在");
+        }
+
+        // 2. 验证旧密码
+        if (!passwordEncoder.matches(oldPassword, user.getPasswordHash())) {
+            // 使用 SecurityException 或类似的异常来表示权限/验证失败
+            throw new SecurityException("旧密码不正确");
+        }
+
+        // 3. 验证新密码 (例如：不能为空，不能太短等)
+        if (!StringUtils.hasText(newPassword) || newPassword.length() < 6) {
+            throw new IllegalArgumentException("新密码不能为空且长度至少为6位");
+        }
+
+        // 4. 加密并更新新密码
+        String newHash = passwordEncoder.encode(newPassword);
+        UsersPojo userToUpdate = new UsersPojo();
+        userToUpdate.setUserId(userId);
+        userToUpdate.setPasswordHash(newHash);
+
+        return userMapper.updateById(userToUpdate) > 0;
+    }
+
+    @Override
+    public boolean changeMbti(String userId, String newMbti) {
+        if (!StringUtils.hasText(newMbti)) {
+            throw new IllegalArgumentException("MBTI 不能为空");
+        }
+        // (可选) 校验 MBTI 格式是否合法
+
+        UsersPojo userToUpdate = new UsersPojo();
+        userToUpdate.setUserId(userId);
+        userToUpdate.setMbtiType(newMbti);
+
+        return userMapper.updateById(userToUpdate) > 0;
+    }
+
+    @Override
+    public boolean changeUsername(String userId, String newUsername) {
+        if (!StringUtils.hasText(newUsername)) {
+            throw new IllegalArgumentException("用户名不能为空");
+        }
+
+        // 1. 检查新用户名是否已被他人占用
+        QueryWrapper<UsersPojo> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("username", newUsername);
+        UsersPojo existingUser = userMapper.selectOne(queryWrapper);
+
+        // 如果存在，且不是当前用户自己 (允许用户改成自己当前的名字，虽然没意义)
+        if (existingUser != null && !Objects.equals(existingUser.getUserId(), userId)) {
+            throw new IllegalArgumentException("该用户名已存在");
+        }
+
+        // 2. 更新用户名
+        UsersPojo userToUpdate = new UsersPojo();
+        userToUpdate.setUserId(userId);
+        userToUpdate.setUsername(newUsername);
+
+        return userMapper.updateById(userToUpdate) > 0;
     }
 }

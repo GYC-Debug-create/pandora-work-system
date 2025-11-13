@@ -30,4 +30,28 @@ public interface UserService {
      * @return 是否成功
      */
     boolean deleteUser(String userId);
+    /**
+     * 修改当前用户密码
+     * @param userId 当前用户ID (从Token获取)
+     * @param oldPassword 用户提供的旧密码 (明文)
+     * @param newPassword 用户提供的新密码 (明文)
+     * @return 是否修改成功
+     */
+    boolean changePassword(String userId, String oldPassword, String newPassword);
+
+    /**
+     * 修改当前用户 MBTI
+     * @param userId 当前用户ID (从Token获取)
+     * @param newMbti 新的 MBTI 类型
+     * @return 是否修改成功
+     */
+    boolean changeMbti(String userId, String newMbti);
+
+    /**
+     * 修改当前用户名
+     * @param userId 当前用户ID (从Token获取)
+     * @param newUsername 新的用户名
+     * @return 是否修改成功
+     */
+    boolean changeUsername(String userId, String newUsername);
 }
