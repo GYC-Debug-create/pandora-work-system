@@ -10,7 +10,9 @@
               </div>
             </template>
             <div class="card-body">
-              <div class="card-value">{{ userStats.total }}</div>
+              <div class="card-value">
+                {{ userStats.total }}
+              </div>
               <div class="card-footer">
                 <span>当前系统注册用户总数</span>
               </div>
@@ -25,7 +27,9 @@
               </div>
             </template>
             <div class="card-body">
-              <div class="card-value">{{ userStats.roles['DEPARTMENT_HEAD'] || 0 }}</div>
+              <div class="card-value">
+                {{ userStats.roles['DEPARTMENT_HEAD'] || 0 }}
+              </div>
               <div class="card-footer">
                 <span>部门老总数量</span>
               </div>
@@ -40,7 +44,12 @@
               </div>
             </template>
             <div class="card-body">
-              <div class="card-value" style="color: #67c23a;">正常</div>
+              <div
+                class="card-value"
+                style="color: #67c23a;"
+              >
+                正常
+              </div>
               <div class="card-footer">
                 <span>系统服务运行中</span>
               </div>
@@ -49,22 +58,44 @@
         </el-col>
       </el-row>
       
-      <el-row :gutter="20" style="margin-top: 20px;">
+      <el-row
+        :gutter="20"
+        style="margin-top: 20px;"
+      >
         <el-col :span="24">
           <el-card class="box-card">
             <template #header>
               <div class="card-header">
                 <span>最近操作日志</span>
                 <div>
-                  <el-button size="small" @click="handleExportCSV">导出CSV</el-button>
-                  <el-button size="small" @click="handleExportJSON">导出JSON</el-button>
-                  <el-button size="small" type="danger" @click="handleClearAll">清空全部</el-button>
+                  <el-button
+                    size="small"
+                    @click="handleExportCSV"
+                  >
+                    导出CSV
+                  </el-button>
+                  <el-button
+                    size="small"
+                    @click="handleExportJSON"
+                  >
+                    导出JSON
+                  </el-button>
+                  <el-button
+                    size="small"
+                    type="danger"
+                    @click="handleClearAll"
+                  >
+                    清空全部
+                  </el-button>
                 </div>
               </div>
             </template>
             
             <!-- 筛选区域 -->
-            <el-form :inline="true" style="margin-bottom: 20px;">
+            <el-form
+              :inline="true"
+              style="margin-bottom: 20px;"
+            >
               <el-form-item label="日期范围">
                 <el-date-picker
                   v-model="dateRange"
@@ -77,55 +108,122 @@
                 />
               </el-form-item>
               <el-form-item label="类型">
-                <el-select v-model="filterType" placeholder="全部" clearable size="small" style="width: 120px;">
-                  <el-option label="全部" value=""></el-option>
-                  <el-option label="操作" value="operation"></el-option>
-                  <el-option label="系统" value="system"></el-option>
-                  <el-option label="错误" value="error"></el-option>
+                <el-select
+                  v-model="filterType"
+                  placeholder="全部"
+                  clearable
+                  size="small"
+                  style="width: 120px;"
+                >
+                  <el-option
+                    label="全部"
+                    value=""
+                  />
+                  <el-option
+                    label="操作"
+                    value="operation"
+                  />
+                  <el-option
+                    label="系统"
+                    value="system"
+                  />
+                  <el-option
+                    label="错误"
+                    value="error"
+                  />
                 </el-select>
               </el-form-item>
               <el-form-item label="关键词">
-                <el-input v-model="filterKeyword" placeholder="搜索日志内容" clearable size="small" style="width: 200px;" />
+                <el-input
+                  v-model="filterKeyword"
+                  placeholder="搜索日志内容"
+                  clearable
+                  size="small"
+                  style="width: 200px;"
+                />
               </el-form-item>
               <el-form-item>
-                <el-button type="primary" size="small" @click="applyFilter">应用筛选</el-button>
-                <el-button size="small" @click="resetFilter">重置</el-button>
+                <el-button
+                  type="primary"
+                  size="small"
+                  @click="applyFilter"
+                >
+                  应用筛选
+                </el-button>
+                <el-button
+                  size="small"
+                  @click="resetFilter"
+                >
+                  重置
+                </el-button>
               </el-form-item>
             </el-form>
 
             <!-- 日志列表 -->
             <div v-if="filteredActivities.length > 0">
-              <el-checkbox v-model="selectAll" @change="handleSelectAll" style="margin-bottom: 10px;">全选</el-checkbox>
+              <el-checkbox
+                v-model="selectAll"
+                style="margin-bottom: 10px;"
+                @change="handleSelectAll"
+              >
+                全选
+              </el-checkbox>
               <el-timeline>
                 <el-timeline-item
-                  v-for="(activity, index) in filteredActivities"
+                  v-for="activity in filteredActivities"
                   :key="activity.originalIndex"
                   :timestamp="activity.timestamp"
                   :type="getTimelineType(activity.type)"
                 >
                   <el-checkbox 
                     :model-value="activity.selected" 
+                    style="margin-right: 10px;"
                     @change="toggleSelect(activity)"
-                    style="margin-right: 10px;">
-                  </el-checkbox>
+                  />
                   {{ activity.content }}
-                  <el-tag v-if="activity.type" size="small" :type="getTagType(activity.type)" style="margin-left: 10px;">
+                  <el-tag
+                    v-if="activity.type"
+                    size="small"
+                    :type="getTagType(activity.type)"
+                    style="margin-left: 10px;"
+                  >
                     {{ getTypeLabel(activity.type) }}
                   </el-tag>
                 </el-timeline-item>
               </el-timeline>
               
               <!-- 批量操作 -->
-              <div style="margin-top: 20px;" v-if="selectedCount > 0">
-                <el-alert :title="`已选中 ${selectedCount} 条日志`" type="info" :closable="false">
+              <div
+                v-if="selectedCount > 0"
+                style="margin-top: 20px;"
+              >
+                <el-alert
+                  :title="`已选中 ${selectedCount} 条日志`"
+                  type="info"
+                  :closable="false"
+                >
                   <template #default>
-                    <el-button size="small" type="danger" @click="handleDeleteSelected">删除选中</el-button>
-                    <el-button size="small" @click="handleCancelSelect">取消选择</el-button>
+                    <el-button
+                      size="small"
+                      type="danger"
+                      @click="handleDeleteSelected"
+                    >
+                      删除选中
+                    </el-button>
+                    <el-button
+                      size="small"
+                      @click="handleCancelSelect"
+                    >
+                      取消选择
+                    </el-button>
                   </template>
                 </el-alert>
               </div>
             </div>
-            <el-empty v-else description="暂无日志记录" />
+            <el-empty
+              v-else
+              description="暂无日志记录"
+            />
           </el-card>
         </el-col>
       </el-row>

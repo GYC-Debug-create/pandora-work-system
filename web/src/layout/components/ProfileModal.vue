@@ -6,30 +6,66 @@
     @update:model-value="$emit('update:visible', $event)"
     @close="handleClose"
   >
-    <el-descriptions :column="1" border>
-      <el-descriptions-item label="用户名">admin</el-descriptions-item>
-      <el-descriptions-item label="角色">系统管理员</el-descriptions-item>
+    <el-descriptions
+      :column="1"
+      border
+    >
+      <el-descriptions-item label="用户名">
+        admin
+      </el-descriptions-item>
+      <el-descriptions-item label="角色">
+        系统管理员
+      </el-descriptions-item>
     </el-descriptions>
     
     <el-divider />
     
     <h4>修改密码</h4>
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
-      <el-form-item label="旧密码" prop="oldPassword">
-        <el-input v-model="form.oldPassword" type="password" show-password />
+    <el-form
+      ref="formRef"
+      :model="form"
+      :rules="rules"
+      label-width="100px"
+    >
+      <el-form-item
+        label="旧密码"
+        prop="oldPassword"
+      >
+        <el-input
+          v-model="form.oldPassword"
+          type="password"
+          show-password
+        />
       </el-form-item>
-      <el-form-item label="新密码" prop="newPassword">
-        <el-input v-model="form.newPassword" type="password" show-password />
+      <el-form-item
+        label="新密码"
+        prop="newPassword"
+      >
+        <el-input
+          v-model="form.newPassword"
+          type="password"
+          show-password
+        />
       </el-form-item>
-      <el-form-item label="确认新密码" prop="confirmPassword">
-        <el-input v-model="form.confirmPassword" type="password" show-password />
+      <el-form-item
+        label="确认新密码"
+        prop="confirmPassword"
+      >
+        <el-input
+          v-model="form.confirmPassword"
+          type="password"
+          show-password
+        />
       </el-form-item>
     </el-form>
     
     <template #footer>
       <span class="dialog-footer">
         <el-button @click="handleClose">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">
+        <el-button
+          type="primary"
+          @click="handleSubmit"
+        >
           确认修改
         </el-button>
       </span>

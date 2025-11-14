@@ -9,11 +9,11 @@
       :unique-opened="true"
       router
     >
-      <sidebar-item 
-        v-for="route in routes" 
-        :key="route.path" 
-        :item="route" 
-        :base-path="route.path" 
+      <sidebar-item
+        v-for="menuRoute in routes"
+        :key="menuRoute.path"
+        :item="menuRoute"
+        :base-path="menuRoute.path"
       />
     </el-menu>
   </el-scrollbar>

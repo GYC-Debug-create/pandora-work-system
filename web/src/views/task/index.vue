@@ -2,40 +2,107 @@
   <div class="app-container">
     <div class="page-container">
       <div class="page-header">
-        <h2 class="page-title">公司十大事项</h2>
-        <el-button type="primary" @click="handleAddTask">
+        <h2 class="page-title">
+          公司十大事项
+        </h2>
+        <el-button
+          type="primary"
+          @click="handleAddTask"
+        >
           <el-icon><Plus /></el-icon> 新增事项
         </el-button>
       </div>
 
       <!-- 事项表格 -->
-      <el-table :data="taskList" border stripe v-loading="loading" style="width: 100%; margin-top: 20px;">
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="title" label="事项标题" />
-        <el-table-column prop="content" label="详细内容" show-overflow-tooltip />
-        <el-table-column prop="createTime" label="创建时间" width="180" />
-        <el-table-column label="操作" width="180">
+      <el-table
+        v-loading="loading"
+        :data="taskList"
+        border
+        stripe
+        style="width: 100%; margin-top: 20px;"
+      >
+        <el-table-column
+          prop="id"
+          label="ID"
+          width="80"
+        />
+        <el-table-column
+          prop="title"
+          label="事项标题"
+        />
+        <el-table-column
+          prop="content"
+          label="详细内容"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="createTime"
+          label="创建时间"
+          width="180"
+        />
+        <el-table-column
+          label="操作"
+          width="180"
+        >
           <template #default="scope">
-            <el-button size="small" @click="handleEditTask(scope.row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="handleDeleteTask(scope.row)">删除</el-button>
+            <el-button
+              size="small"
+              @click="handleEditTask(scope.row)"
+            >
+              编辑
+            </el-button>
+            <el-button
+              size="small"
+              type="danger"
+              @click="handleDeleteTask(scope.row)"
+            >
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
 
       <!-- 新增/编辑事项对话框 -->
-      <el-dialog :title="dialogTitle" v-model="dialogVisible" width="600px" @close="resetForm">
-        <el-form ref="taskFormRef" :model="taskForm" :rules="taskRules" label-width="80px">
-          <el-form-item label="事项标题" prop="title">
-            <el-input v-model="taskForm.title" placeholder="请输入事项标题" />
+      <el-dialog
+        v-model="dialogVisible"
+        :title="dialogTitle"
+        width="600px"
+        @close="resetForm"
+      >
+        <el-form
+          ref="taskFormRef"
+          :model="taskForm"
+          :rules="taskRules"
+          label-width="80px"
+        >
+          <el-form-item
+            label="事项标题"
+            prop="title"
+          >
+            <el-input
+              v-model="taskForm.title"
+              placeholder="请输入事项标题"
+            />
           </el-form-item>
-          <el-form-item label="详细内容" prop="content">
-            <el-input v-model="taskForm.content" type="textarea" :rows="5" placeholder="请输入事项详细内容" />
+          <el-form-item
+            label="详细内容"
+            prop="content"
+          >
+            <el-input
+              v-model="taskForm.content"
+              type="textarea"
+              :rows="5"
+              placeholder="请输入事项详细内容"
+            />
           </el-form-item>
         </el-form>
         <template #footer>
           <span class="dialog-footer">
             <el-button @click="dialogVisible = false">取消</el-button>
-            <el-button type="primary" @click="submitForm">确定</el-button>
+            <el-button
+              type="primary"
+              @click="submitForm"
+            >确定</el-button>
           </span>
         </template>
       </el-dialog>
@@ -135,9 +202,13 @@ const resetForm = () => {
     // Element Plus 2.3+ 使用 clearValidate
     try {
       taskFormRef.value.clearValidate();
-    } catch(e) {
+    } catch {
       // 旧版本可能使用 resetFields，做个兼容或根据您的版本调整
-      try { taskFormRef.value.resetFields(); } catch(e2) {}
+      try {
+        taskFormRef.value.resetFields();
+      } catch {
+        // 忽略错误
+      }
     }
   }
 };
@@ -180,7 +251,7 @@ const submitForm = () => {
         : createTask(dataToSend);                     // 调用 createTask 函数
     const action = isEdit ? '更新' : '创建';
 
-    apiCall.then((response) => { // 后端操作成功后返回更新/创建的对象
+    apiCall.then(() => { // 后端操作成功后返回更新/创建的对象
       getTaskList(); // 成功后刷新列表
       logStore.addLog(`${action}了事项: "${dataToSend.title}"`);
       ElMessage.success(`${action}成功`);

@@ -5,7 +5,6 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 </script>
 

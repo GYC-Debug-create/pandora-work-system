@@ -2,7 +2,10 @@
   <div class="layout-container">
     <el-container>
       <!-- 侧边栏 -->
-      <el-aside width="220px" class="sidebar-container">
+      <el-aside
+        width="220px"
+        class="sidebar-container"
+      >
         <div class="logo-container">
           <span class="logo-title">潘多拉系统</span>
         </div>
@@ -11,24 +14,40 @@
 
       <el-container>
         <!-- 头部 -->
-        <el-header height="60px" class="header">
+        <el-header
+          height="60px"
+          class="header"
+        >
           <div class="header-left">
-            <el-icon class="hamburger" @click="toggleSidebar">
+            <el-icon
+              class="hamburger"
+              @click="toggleSidebar"
+            >
               <Expand v-if="isCollapse" />
               <Fold v-else />
             </el-icon>
             <Breadcrumb />
           </div>
           <div class="header-right">
-            <el-dropdown trigger="click" @command="handleCommand">
+            <el-dropdown
+              trigger="click"
+              @command="handleCommand"
+            >
               <div class="avatar-container">
                 <span>管理员</span>
                 <el-icon><CaretBottom /></el-icon>
               </div>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="profile">个人中心</el-dropdown-item>
-                  <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
+                  <el-dropdown-item command="profile">
+                    个人中心
+                  </el-dropdown-item>
+                  <el-dropdown-item
+                    command="logout"
+                    divided
+                  >
+                    退出登录
+                  </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -47,7 +66,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import Sidebar from './components/Sidebar.vue'
 import Breadcrumb from './components/Breadcrumb.vue'
