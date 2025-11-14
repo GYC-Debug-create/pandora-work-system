@@ -1,17 +1,58 @@
-# 忽略 IDE 配置文件
+# IDE配置文件
 .idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
 
-# 忽略 Java 编译输出 (解决 target 文件夹问题)
+# Maven编译产物
 target/
+backend/target/
+**/target/
 build/
+
+# 编译文件
 *.class
+*.jar
+*.war
+*.ear
 
-# 忽略 Node.js 依赖 (解决你现在10000个文件的问题)
-node_modules/
+# 日志文件
+*.log
+logs/
 
-# 忽略 Web 项目打包输出
-dist/
+# 临时文件
+*.tmp
+*.bak
+*.swp
+*~
 
-# 忽略操作系统文件
+# 操作系统文件
 .DS_Store
 Thumbs.db
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Web项目打包输出
+dist/
+
+# Android
+android/build/
+android/.gradle/
+android/local.properties
+*.apk
+
+# 作业交付物(不提交到Git)
+单元测试/
+单元测试.zip
+代码评审交付物清单.md
+提交文件清单.md
+
+# 其他
+*.zip
