@@ -111,7 +111,6 @@ const handleLogin = () => {
         loading.value = false;
       });
     } else {
-      console.log('表单校验失败');
       return false;
     }
   });

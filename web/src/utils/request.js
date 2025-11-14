@@ -27,7 +27,6 @@ service.interceptors.request.use(
       return config;
     },
     error => {
-      console.log(error); // for debug
       return Promise.reject(error);
     }
 )
@@ -40,7 +39,6 @@ service.interceptors.response.use(
       return response.data; // 直接返回 data 部分
     },
     error => {
-      console.log('响应错误: ' + error);
       let message = '请求发生错误';
       if (error.response) {
         message = typeof error.response.data === 'string' ? error.response.data : (error.response.data?.message || error.message);

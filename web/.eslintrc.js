@@ -13,6 +13,7 @@ module.exports = {
     ecmaVersion: 'latest',
     sourceType: 'module'
   },
+  ignorePatterns: ['dist', 'node_modules'],
   rules: {
     // 关闭一些过于严格的规则
     'vue/multi-word-component-names': 'off',
