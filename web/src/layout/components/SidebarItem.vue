@@ -2,8 +2,14 @@
   <div v-if="!item.hidden">
     <!-- 没有子路由的情况 -->
     <template v-if="hasOneShowingChild(item.children, item) && (!onlyOneChild.children || onlyOneChild.noShowingChildren) && !item.alwaysShow">
-      <app-link v-if="onlyOneChild.meta" :to="resolvePath(onlyOneChild.path)">
-        <el-menu-item :index="resolvePath(onlyOneChild.path)" :class="{'submenu-title-noDropdown': !isNest}">
+      <app-link
+        v-if="onlyOneChild.meta"
+        :to="resolvePath(onlyOneChild.path)"
+      >
+        <el-menu-item
+          :index="resolvePath(onlyOneChild.path)"
+          :class="{'submenu-title-noDropdown': !isNest}"
+        >
           <el-icon v-if="onlyOneChild.meta && onlyOneChild.meta.icon">
             <component :is="onlyOneChild.meta.icon" />
           </el-icon>
@@ -15,7 +21,11 @@
     </template>
 
     <!-- 有子路由的情况 -->
-    <el-sub-menu v-else :index="resolvePath(item.path)" popper-append-to-body>
+    <el-sub-menu
+      v-else
+      :index="resolvePath(item.path)"
+      popper-append-to-body
+    >
       <template #title>
         <el-icon v-if="item.meta && item.meta.icon">
           <component :is="item.meta.icon" />
@@ -36,7 +46,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { isExternal } from '@/utils/validate'
 import AppLink from './Link.vue'
 import path from 'path-browserify'

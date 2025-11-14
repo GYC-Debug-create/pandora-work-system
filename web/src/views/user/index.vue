@@ -1,13 +1,25 @@
 <template>
   <div class="app-container">
-    <el-row :gutter="20" class="summary-cards">
+    <el-row
+      :gutter="20"
+      class="summary-cards"
+    >
       <el-col :span="6">
         <el-card shadow="hover">
           <div class="card-content">
-            <div class="card-icon" style="background: #409EFF;"><el-icon><User /></el-icon></div>
+            <div
+              class="card-icon"
+              style="background: #409EFF;"
+            >
+              <el-icon><User /></el-icon>
+            </div>
             <div class="card-text">
-              <div class="card-value">{{ userStats.total }}</div>
-              <div class="card-label">用户总数</div>
+              <div class="card-value">
+                {{ userStats.total }}
+              </div>
+              <div class="card-label">
+                用户总数
+              </div>
             </div>
           </div>
         </el-card>
@@ -15,10 +27,19 @@
       <el-col :span="6">
         <el-card shadow="hover">
           <div class="card-content">
-            <div class="card-icon" style="background: #67C23A;"><el-icon><CircleCheck /></el-icon></div>
+            <div
+              class="card-icon"
+              style="background: #67C23A;"
+            >
+              <el-icon><CircleCheck /></el-icon>
+            </div>
             <div class="card-text">
-              <div class="card-value">{{ userStats.active }}</div>
-              <div class="card-label">活跃用户</div>
+              <div class="card-value">
+                {{ userStats.active }}
+              </div>
+              <div class="card-label">
+                活跃用户
+              </div>
             </div>
           </div>
         </el-card>
@@ -26,10 +47,19 @@
       <el-col :span="6">
         <el-card shadow="hover">
           <div class="card-content">
-            <div class="card-icon" style="background: #F56C6C;"><el-icon><CircleClose /></el-icon></div>
+            <div
+              class="card-icon"
+              style="background: #F56C6C;"
+            >
+              <el-icon><CircleClose /></el-icon>
+            </div>
             <div class="card-text">
-              <div class="card-value">{{ userStats.inactive }}</div>
-              <div class="card-label">禁用用户</div>
+              <div class="card-value">
+                {{ userStats.inactive }}
+              </div>
+              <div class="card-label">
+                禁用用户
+              </div>
             </div>
           </div>
         </el-card>
@@ -37,9 +67,20 @@
       <el-col :span="6">
         <el-card shadow="hover">
           <div class="card-content">
-            <div class="card-icon" style="background: #E6A23C;"><el-icon><Plus /></el-icon></div>
+            <div
+              class="card-icon"
+              style="background: #E6A23C;"
+            >
+              <el-icon><Plus /></el-icon>
+            </div>
             <div class="card-text">
-              <el-button type="primary" @click="handleAdd" style="width: 100%; height: 100%; font-size: 16px;">添加新用户</el-button>
+              <el-button
+                type="primary"
+                style="width: 100%; height: 100%; font-size: 16px;"
+                @click="handleAdd"
+              >
+                添加新用户
+              </el-button>
             </div>
           </div>
         </el-card>
@@ -47,127 +88,259 @@
     </el-row>
     <div class="page-container">
       <div class="page-header">
-        <h2 class="page-title">用户列表</h2>
+        <h2 class="page-title">
+          用户列表
+        </h2>
       </div>
 
-      <el-card class="filter-container" shadow="never">
-        <el-form :inline="true" :model="queryParams" ref="queryFormRef" class="demo-form-inline">
-          <el-form-item label="用户名" prop="name">
-            <el-input v-model="queryParams.name" placeholder="请输入用户名" clearable style="width: 180px;"></el-input>
+      <el-card
+        class="filter-container"
+        shadow="never"
+      >
+        <el-form
+          ref="queryFormRef"
+          :inline="true"
+          :model="queryParams"
+          class="demo-form-inline"
+        >
+          <el-form-item
+            label="用户名"
+            prop="name"
+          >
+            <el-input
+              v-model="queryParams.name"
+              placeholder="请输入用户名"
+              clearable
+              style="width: 180px;"
+            />
           </el-form-item>
-          <el-form-item label="邮箱" prop="email">
-            <el-input v-model="queryParams.email" placeholder="请输入邮箱" clearable style="width: 180px;"></el-input>
+          <el-form-item
+            label="邮箱"
+            prop="email"
+          >
+            <el-input
+              v-model="queryParams.email"
+              placeholder="请输入邮箱"
+              clearable
+              style="width: 180px;"
+            />
           </el-form-item>
-          <el-form-item label="角色" prop="role">
+          <el-form-item
+            label="角色"
+            prop="role"
+          >
             <el-select
-                v-model="queryParams.role"
-                placeholder="请选择角色"
-                clearable
-                style="width: 180px;"
+              v-model="queryParams.role"
+              placeholder="请选择角色"
+              clearable
+              style="width: 180px;"
             >
               <el-option
-                  v-for="item in roleOptionsForFilter"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value">
-              </el-option>
+                v-for="item in roleOptionsForFilter"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="handleQuery">搜索</el-button>
-            <el-button @click="resetQuery">重置</el-button>
+            <el-button
+              type="primary"
+              @click="handleQuery"
+            >
+              搜索
+            </el-button>
+            <el-button @click="resetQuery">
+              重置
+            </el-button>
           </el-form-item>
         </el-form>
       </el-card>
 
       <el-table
-          v-loading="loading"
-          :data="userList"
-          border
-          stripe
-          style="width: 100%; margin-top: 20px;">
-        <el-table-column prop="userId" label="用户ID" width="180"></el-table-column>
-        <el-table-column prop="username" label="用户名" width="120"></el-table-column>
-        <el-table-column prop="fullName" label="全名" width="120"></el-table-column>
-        <el-table-column prop="email" label="邮箱"></el-table-column>
-        <el-table-column prop="roleName" label="角色" width="120"></el-table-column>
-        <el-table-column prop="departmentName" label="部门" width="120"></el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
+        v-loading="loading"
+        :data="userList"
+        border
+        stripe
+        style="width: 100%; margin-top: 20px;"
+      >
+        <el-table-column
+          prop="userId"
+          label="用户ID"
+          width="180"
+        />
+        <el-table-column
+          prop="username"
+          label="用户名"
+          width="120"
+        />
+        <el-table-column
+          prop="fullName"
+          label="全名"
+          width="120"
+        />
+        <el-table-column
+          prop="email"
+          label="邮箱"
+        />
+        <el-table-column
+          prop="roleName"
+          label="角色"
+          width="120"
+        />
+        <el-table-column
+          prop="departmentName"
+          label="部门"
+          width="120"
+        />
+        <el-table-column
+          prop="status"
+          label="状态"
+          width="100"
+        >
           <template #default="scope">
             <el-tag :type="scope.row.status === '活跃' ? 'success' : 'danger'">
               {{ scope.row.status }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="180" :formatter="formatDateTime"></el-table-column>
-        <el-table-column label="操作" width="180">
+        <el-table-column
+          prop="createdAt"
+          label="创建时间"
+          width="180"
+          :formatter="formatDateTime"
+        />
+        <el-table-column
+          label="操作"
+          width="180"
+        >
           <template #default="scope">
-            <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+            <el-button
+              size="small"
+              @click="handleEdit(scope.row)"
+            >
+              编辑
+            </el-button>
+            <el-button
+              size="small"
+              type="danger"
+              @click="handleDelete(scope.row)"
+            >
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
 
       <div class="pagination-container">
         <el-pagination
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
-            :current-page="queryParams.pageNum"
-            :page-sizes="[10, 20, 50, 100]"
-            :page-size="queryParams.pageSize"
-            layout="total, sizes, prev, pager, next, jumper"
-            :total="total">
-        </el-pagination>
+          :current-page="queryParams.pageNum"
+          :page-sizes="[10, 20, 50, 100]"
+          :page-size="queryParams.pageSize"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="total"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
       </div>
 
       <el-dialog
-          :title="dialogTitle"
-          v-model="dialogVisible"
-          width="600px"
-          append-to-body
-          @close="resetForm">
+        v-model="dialogVisible"
+        :title="dialogTitle"
+        width="600px"
+        append-to-body
+        @close="resetForm"
+      >
         <el-form
-            ref="userFormRef"
-            :model="userForm"
-            :rules="rules"
-            label-width="100px">
-          <el-form-item label="用户名" prop="username">
-            <el-input v-model="userForm.username" placeholder="请输入用户名"></el-input>
+          ref="userFormRef"
+          :model="userForm"
+          :rules="rules"
+          label-width="100px"
+        >
+          <el-form-item
+            label="用户名"
+            prop="username"
+          >
+            <el-input
+              v-model="userForm.username"
+              placeholder="请输入用户名"
+            />
           </el-form-item>
-          <el-form-item v-if="!userForm.userId" label="初始密码" prop="passwordHash">
-            <el-input v-model="userForm.passwordHash" type="password" placeholder="请输入初始密码" show-password></el-input>
+          <el-form-item
+            v-if="!userForm.userId"
+            label="初始密码"
+            prop="passwordHash"
+          >
+            <el-input
+              v-model="userForm.passwordHash"
+              type="password"
+              placeholder="请输入初始密码"
+              show-password
+            />
           </el-form-item>
-          <el-form-item label="全名" prop="fullName">
-            <el-input v-model="userForm.fullName" placeholder="请输入全名"></el-input>
+          <el-form-item
+            label="全名"
+            prop="fullName"
+          >
+            <el-input
+              v-model="userForm.fullName"
+              placeholder="请输入全名"
+            />
           </el-form-item>
-          <el-form-item label="邮箱" prop="email">
-            <el-input v-model="userForm.email" placeholder="请输入邮箱"></el-input>
+          <el-form-item
+            label="邮箱"
+            prop="email"
+          >
+            <el-input
+              v-model="userForm.email"
+              placeholder="请输入邮箱"
+            />
           </el-form-item>
-          <el-form-item label="MBTI" prop="mbtiType">
+          <el-form-item
+            label="MBTI"
+            prop="mbtiType"
+          >
             <el-select 
               v-model="userForm.mbtiType" 
               placeholder="请选择MBTI类型" 
               clearable 
               style="width: 100%;"
-              popper-class="mbti-select-dropdown">
+              popper-class="mbti-select-dropdown"
+            >
               <el-option 
                 v-for="mbti in mbtiOptions" 
                 :key="mbti.value" 
                 :label="`${mbti.icon} ${mbti.value} - ${mbti.name}`" 
-                :value="mbti.value">
-                <el-tooltip placement="right" effect="light" :show-after="300">
+                :value="mbti.value"
+              >
+                <el-tooltip
+                  placement="right"
+                  effect="light"
+                  :show-after="300"
+                >
                   <template #content>
                     <div class="mbti-tooltip">
-                      <div class="mbti-tooltip-header" :style="{background: mbti.color}">
+                      <div
+                        class="mbti-tooltip-header"
+                        :style="{background: mbti.color}"
+                      >
                         <span class="mbti-icon">{{ mbti.icon }}</span>
                         <div>
-                          <div class="mbti-code">{{ mbti.value }}</div>
-                          <div class="mbti-name">{{ mbti.name }}</div>
+                          <div class="mbti-code">
+                            {{ mbti.value }}
+                          </div>
+                          <div class="mbti-name">
+                            {{ mbti.name }}
+                          </div>
                         </div>
                       </div>
                       <div class="mbti-tooltip-body">
-                        <div class="mbti-trait">{{ mbti.trait }}</div>
-                        <div class="mbti-desc">{{ mbti.description }}</div>
+                        <div class="mbti-trait">
+                          {{ mbti.trait }}
+                        </div>
+                        <div class="mbti-desc">
+                          {{ mbti.description }}
+                        </div>
                         <div class="mbti-famous">
                           <strong>代表人物：</strong>{{ mbti.famous }}
                         </div>
@@ -179,37 +352,67 @@
               </el-option>
             </el-select>
           </el-form-item>
-          <el-form-item label="部门" prop="departmentId">
-            <el-select v-model="userForm.departmentId" placeholder="请选择部门" style="width: 100%;">
+          <el-form-item
+            label="部门"
+            prop="departmentId"
+          >
+            <el-select
+              v-model="userForm.departmentId"
+              placeholder="请选择部门"
+              style="width: 100%;"
+            >
               <el-option
-                  v-for="item in departmentOptions"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value">
-              </el-option>
+                v-for="item in departmentOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
             </el-select>
           </el-form-item>
-          <el-form-item label="角色" prop="roleId">
-            <el-select v-model="userForm.roleId" placeholder="请选择角色" style="width: 100%;">
+          <el-form-item
+            label="角色"
+            prop="roleId"
+          >
+            <el-select
+              v-model="userForm.roleId"
+              placeholder="请选择角色"
+              style="width: 100%;"
+            >
               <el-option
-                  v-for="item in roleOptionsForForm"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value">
-              </el-option>
+                v-for="item in roleOptionsForForm"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
             </el-select>
           </el-form-item>
-          <el-form-item label="状态" prop="status">
-            <el-select v-model="userForm.status" placeholder="请选择状态" style="width: 100%;">
-              <el-option label="活跃" value="活跃"></el-option>
-              <el-option label="禁用" value="禁用"></el-option>
+          <el-form-item
+            label="状态"
+            prop="status"
+          >
+            <el-select
+              v-model="userForm.status"
+              placeholder="请选择状态"
+              style="width: 100%;"
+            >
+              <el-option
+                label="活跃"
+                value="活跃"
+              />
+              <el-option
+                label="禁用"
+                value="禁用"
+              />
             </el-select>
           </el-form-item>
         </el-form>
         <template #footer>
           <span class="dialog-footer">
             <el-button @click="dialogVisible = false">取消</el-button>
-            <el-button type="primary" @click="submitForm">确定</el-button>
+            <el-button
+              type="primary"
+              @click="submitForm"
+            >确定</el-button>
           </span>
         </template>
       </el-dialog>
@@ -515,7 +718,7 @@ const handleDelete = (row) => {
       getList();
       ElMessage({ type: 'success', message: '删除成功!' });
       logStore.addLog(`删除了用户 "${row.username}" (ID: ${row.userId})`);
-    }).catch(error => { 
+    }).catch(() => {
       logStore.addLog(`删除用户 "${row.username}" 失败`, 'error');
     });
   }).catch(() => {
@@ -564,7 +767,7 @@ const submitForm = () => {
         ElMessage({ type: 'success', message: successMsg });
         logStore.addLog(actionLog);
         dialogVisible.value = false;
-      }).catch(error => { 
+      }).catch(() => {
         const action = isEdit ? '更新' : '创建';
         logStore.addLog(`${action}用户 "${dataToSend.username}" 失败`, 'error');
       });
@@ -577,7 +780,7 @@ const submitForm = () => {
 };
 
 // 格式化日期时间
-const formatDateTime = (row, column, cellValue, index) => {
+const formatDateTime = (row, column, cellValue) => {
   if (!cellValue) return '';
   try {
     const date = new Date(cellValue);
