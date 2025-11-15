@@ -104,12 +104,14 @@ const handleLogin = () => {
         // 记录系统日志
         logStore.addLog(`用户 ${userData.username} 登录系统`, 'system');
 
-        router.push('/'); // 跳转首页
-      }).catch(() => {
-        // ... (错误处理保持不变) ...
+        router.push('/')
+      }).catch(error => {
+        // 登录失败的错误处理
+        const errorMessage = error.response?.data || error.message || '登录失败，请重试'
+        ElMessage.error(errorMessage)
       }).finally(() => {
-        loading.value = false;
-      });
+        loading.value = false
+      })
     } else {
       return false;
     }

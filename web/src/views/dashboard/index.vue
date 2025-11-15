@@ -173,10 +173,10 @@
                   v-for="activity in filteredActivities"
                   :key="activity.originalIndex"
                   :timestamp="activity.timestamp"
-                  :type="getTimelineType(activity.type)"
+                  :type="getLogTimelineType(activity.type)"
                 >
-                  <el-checkbox 
-                    :model-value="activity.selected" 
+                  <el-checkbox
+                    :model-value="activity.selected"
                     style="margin-right: 10px;"
                     @change="toggleSelect(activity)"
                   />
@@ -184,10 +184,10 @@
                   <el-tag
                     v-if="activity.type"
                     size="small"
-                    :type="getTagType(activity.type)"
+                    :type="getLogTagType(activity.type)"
                     style="margin-left: 10px;"
                   >
-                    {{ getTypeLabel(activity.type) }}
+                    {{ getLogTypeLabel(activity.type) }}
                   </el-tag>
                 </el-timeline-item>
               </el-timeline>
@@ -236,6 +236,12 @@ import { ref, onMounted, computed } from 'vue'
 import { getUserList } from '@/api/user'
 import { useLogStore } from '@/store/log'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import {
+  LOG_TYPES,
+  getLogTypeLabel,
+  getLogTagType,
+  getLogTimelineType
+} from '@/constants/log'
 
 const logStore = useLogStore()
 
@@ -413,36 +419,6 @@ const handleExportJSON = () => {
   logStore.exportToJSON(logsToExport)
   logStore.addLog(`导出了 ${count} 条日志为 JSON 格式`, 'system')
   ElMessage.success('导出成功')
-}
-
-// 获取时间线类型
-const getTimelineType = (type) => {
-  const typeMap = {
-    'operation': 'primary',
-    'system': 'success',
-    'error': 'danger'
-  }
-  return typeMap[type] || 'primary'
-}
-
-// 获取标签类型
-const getTagType = (type) => {
-  const typeMap = {
-    'operation': 'info',
-    'system': 'success',
-    'error': 'danger'
-  }
-  return typeMap[type] || 'info'
-}
-
-// 获取类型标签
-const getTypeLabel = (type) => {
-  const labelMap = {
-    'operation': '操作',
-    'system': '系统',
-    'error': '错误'
-  }
-  return labelMap[type] || '未知'
 }
 
 // 获取用户数据并进行统计
