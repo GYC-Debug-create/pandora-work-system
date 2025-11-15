@@ -1,10 +1,22 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { LOG_TYPES, LOG_RETENTION_MS } from '@/constants/log'
+
+// 常量定义
+const STORAGE_KEY = 'system_logs'
+
+// 创建初始日志对象
+const createInitialLog = () => ({
+  content: '系统初始化成功',
+  timestamp: new Date().toLocaleString(),
+  time: Date.now(),
+  type: LOG_TYPES.SYSTEM
+})
 
 export const useLogStore = defineStore('log', () => {
   // 从 localStorage 恢复日志
   const loadLogsFromStorage = () => {
-    const savedLogs = localStorage.getItem('system_logs')
+    const savedLogs = localStorage.getItem(STORAGE_KEY)
     if (savedLogs) {
       try {
         return JSON.parse(savedLogs)
@@ -13,7 +25,7 @@ export const useLogStore = defineStore('log', () => {
         return []
       }
     }
-    return [{ content: '系统初始化成功', timestamp: new Date().toLocaleString(), time: Date.now(), type: 'system' }]
+    return [createInitialLog()]
   }
 
   // state: 日志列表
@@ -21,13 +33,13 @@ export const useLogStore = defineStore('log', () => {
 
   // 保存到 localStorage
   const saveToStorage = () => {
-    localStorage.setItem('system_logs', JSON.stringify(logs.value))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(logs.value))
   }
 
-  // 自动清理7天前的日志
+  // 自动清理过期日志
   const cleanOldLogs = () => {
-    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
-    logs.value = logs.value.filter(log => log.time > sevenDaysAgo)
+    const cutoffTime = Date.now() - LOG_RETENTION_MS
+    logs.value = logs.value.filter(log => log.time > cutoffTime)
   }
 
   // 添加日志
@@ -48,12 +60,7 @@ export const useLogStore = defineStore('log', () => {
 
   // 清空所有日志
   const clearAllLogs = () => {
-    logs.value = [{ 
-      content: '系统初始化成功', 
-      timestamp: new Date().toLocaleString(), 
-      time: Date.now(),
-      type: 'system'
-    }]
+    logs.value = [createInitialLog()]
     saveToStorage()
   }
 
