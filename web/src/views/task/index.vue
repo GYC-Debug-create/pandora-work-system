@@ -7,9 +7,11 @@
         </h2>
         <el-button
           type="primary"
+          :disabled="taskList.length >= 10"
           @click="handleAddTask"
         >
           <el-icon><Plus /></el-icon> 新增事项
+          <span v-if="taskList.length >= 10">（已满）</span>
         </el-button>
       </div>
 
@@ -61,6 +63,17 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <!-- 十大事项已满警告 -->
+      <el-alert
+        v-if="taskList.length >= 10"
+        title="十大事项已满"
+        type="warning"
+        :closable="false"
+        style="margin-top: 20px;"
+      >
+        十大事项已满（{{ taskList.length }}/10），如需添加请先删除现有事项
+      </el-alert>
 
       <!-- 新增/编辑事项对话框 -->
       <el-dialog
@@ -215,6 +228,15 @@ const resetForm = () => {
 
 // 新增弹窗
 const handleAddTask = () => {
+  // 检查是否已达到10个
+  if (taskList.value.length >= 10) {
+    ElMessage.warning({
+      message: '十大事项已满（10/10），请先删除现有事项后再添加',
+      duration: 3000
+    });
+    return;
+  }
+
   resetForm();
   dialogTitle.value = '新增事项';
   dialogVisible.value = true;
@@ -259,6 +281,10 @@ const submitForm = () => {
     }).catch(error => {
       console.error(`${action}事项失败:`, error);
       logStore.addLog(`${action}事项 "${dataToSend.title}" 失败`, 'error');
+
+      // 显示后端返回的错误信息
+      const errorMessage = error.response?.data || `${action}失败`;
+      ElMessage.error(errorMessage);
     });
   });
 };

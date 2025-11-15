@@ -54,5 +54,13 @@ android/local.properties
 代码评审交付物清单.md
 提交文件清单.md
 
+# H2 数据库文件（运行时产生）
+backend/*.mv.db
+backend/*.lock.db
+backend/*.trace.db
+*.mv.db
+*.lock.db
+*.trace.db
+
 # 其他
 *.zip
