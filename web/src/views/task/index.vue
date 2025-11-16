@@ -17,6 +17,7 @@
 
       <!-- 事项表格 -->
       <el-table
+        v-if="taskList.length > 0"
         v-loading="loading"
         :data="taskList"
         border
@@ -27,24 +28,55 @@
           prop="id"
           label="ID"
           width="80"
-        />
+          align="center"
+        >
+          <template #default="scope">
+            <el-tag type="info" size="small" effect="plain">
+              #{{ scope.row.id }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column
           prop="title"
           label="事项标题"
-        />
+          min-width="200"
+        >
+          <template #default="scope">
+            <div style="font-weight: 600; color: var(--text-color-primary);">
+              {{ scope.row.title }}
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column
           prop="content"
           label="详细内容"
+          min-width="300"
           show-overflow-tooltip
-        />
+        >
+          <template #default="scope">
+            <div style="color: var(--text-color-regular);">
+              {{ scope.row.content }}
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column
           prop="createTime"
           label="创建时间"
           width="180"
-        />
+          align="center"
+        >
+          <template #default="scope">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+              <el-icon><Clock /></el-icon>
+              <span>{{ scope.row.createTime }}</span>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column
           label="操作"
           width="180"
+          fixed="right"
+          align="center"
         >
           <template #default="scope">
             <el-button
@@ -63,6 +95,26 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <!-- 空状态 -->
+      <el-empty
+        v-else-if="!loading && taskList.length === 0"
+        description="当前还没有公司事项"
+        style="margin-top: 40px;"
+      >
+        <template #image>
+          <el-icon :size="100" color="var(--el-color-info)">
+            <Document />
+          </el-icon>
+        </template>
+        <el-button type="primary" @click="handleAddTask">
+          <el-icon><Plus /></el-icon>
+          新增事项
+        </el-button>
+        <div style="margin-top: 12px; font-size: 13px; color: var(--text-color-secondary);">
+          点击上方按钮开始维护公司十大事项信息
+        </div>
+      </el-empty>
 
       <!-- 十大事项已满警告 -->
       <el-alert
@@ -126,7 +178,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Clock, Document } from '@element-plus/icons-vue'
 import { useLogStore } from '@/store/log'
 import { formatDateTime } from '@/utils/format'
 import {
@@ -162,12 +214,38 @@ const getTaskList = () => {
   loading.value = true
   getCompanyMatters().then(response => {
     const matters = Array.isArray(response) ? response : []
-    taskList.value = matters.map(matter => ({
-      id: matter.matterId,
-      title: matter.title,
-      content: matter.content,
-      createTime: formatDateTime(matter.createdAt)
-    })).sort((a, b) => a.id - b.id)
+    taskList.value = matters.map(matter => {
+      // 处理创建时间
+      let timeStr = '未知时间'
+
+      if (matter.createdAt) {
+        try {
+          // 如果是字符串格式（ISO 8601），直接格式化
+          if (typeof matter.createdAt === 'string') {
+            timeStr = formatDateTime(matter.createdAt)
+          }
+          // 如果是数组格式 [year, month, day, hour, minute, second]
+          else if (Array.isArray(matter.createdAt) && matter.createdAt.length >= 3) {
+            const year = matter.createdAt[0]
+            const month = String(matter.createdAt[1]).padStart(2, '0')
+            const day = String(matter.createdAt[2]).padStart(2, '0')
+            const hour = String(matter.createdAt[3] || 0).padStart(2, '0')
+            const minute = String(matter.createdAt[4] || 0).padStart(2, '0')
+            const second = String(matter.createdAt[5] || 0).padStart(2, '0')
+            timeStr = `${year}-${month}-${day} ${hour}:${minute}:${second}`
+          }
+        } catch (e) {
+          console.error('时间格式化失败:', matter.createdAt, e)
+        }
+      }
+
+      return {
+        id: matter.matterId,
+        title: matter.title,
+        content: matter.content,
+        createTime: timeStr
+      }
+    }).sort((a, b) => a.id - b.id)
     loading.value = false
   }).catch(error => {
     console.error('获取事项列表失败:', error)
@@ -249,11 +327,17 @@ const submitForm = () => {
 
 // 删除事项
 const handleDeleteTask = (row) => {
-  ElMessageBox.confirm(`确定要删除事项 "${row.title}" 吗?`, '警告', {
-    type: 'warning',
-    confirmButtonText: '确定',
-    cancelButtonText: '取消'
-  }).then(() => {
+  ElMessageBox.confirm(
+    `确定要删除事项 "${row.title}" 吗？删除后该事项的所有信息将被永久移除，此操作不可恢复。`,
+    '删除事项确认',
+    {
+      type: 'warning',
+      confirmButtonText: '确认删除',
+      cancelButtonText: '取消',
+      distinguishCancelAndClose: true,
+      confirmButtonClass: 'el-button--danger'
+    }
+  ).then(() => {
     deleteCompanyMatter(row.id).then(() => {
       getTaskList()
       logStore.addLog(`删除了事项: "${row.title}" (ID: ${row.id})`)
@@ -261,9 +345,10 @@ const handleDeleteTask = (row) => {
     }).catch(error => {
       console.error('删除事项失败:', error)
       logStore.addLog(`删除事项 "${row.title}" 失败`, 'error')
+      ElMessage.error('删除失败，请稍后重试')
     })
   }).catch(() => {
-    ElMessage.info('已取消删除')
+    // 用户取消删除，不显示提示
   })
 }
 

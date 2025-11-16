@@ -13,7 +13,15 @@ import { useLogStore } from './store/log'
 import './assets/styles/main.css'
 import './assets/styles/theme.css'
 
+// 导入所有 Element Plus 图标
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+
 const app = createApp(App)
+
+// 全局注册所有图标
+for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+  app.component(key, component)
+}
 
 const pinia = createPinia()
 app.use(pinia)

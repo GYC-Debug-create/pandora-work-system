@@ -157,7 +157,9 @@
         </el-form>
       </el-card>
 
+      <!-- 用户列表表格 -->
       <el-table
+        v-if="userList.length > 0"
         v-loading="loading"
         :data="userList"
         border
@@ -173,7 +175,11 @@
           prop="username"
           label="用户名"
           width="120"
-        />
+        >
+          <template #default="scope">
+            <span style="font-weight: 500;">{{ scope.row.username }}</span>
+          </template>
+        </el-table-column>
         <el-table-column
           prop="fullName"
           label="全名"
@@ -187,12 +193,36 @@
           prop="roleName"
           label="角色"
           width="120"
-        />
+        >
+          <template #default="scope">
+            <el-tag type="primary" size="small" effect="plain">
+              {{ scope.row.roleName }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column
           prop="departmentName"
           label="部门"
-          width="120"
-        />
+          width="140"
+        >
+          <template #default="scope">
+            <el-tag type="info" size="small" effect="plain">
+              {{ scope.row.departmentName }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="mbtiType"
+          label="MBTI"
+          width="100"
+        >
+          <template #default="scope">
+            <el-tag v-if="scope.row.mbtiType" size="small" effect="light">
+              {{ scope.row.mbtiType }}
+            </el-tag>
+            <span v-else style="color: var(--text-color-placeholder);">-</span>
+          </template>
+        </el-table-column>
         <el-table-column
           prop="status"
           label="状态"
@@ -208,11 +238,16 @@
           prop="createdAt"
           label="创建时间"
           width="180"
-          :formatter="formatDateTime"
-        />
+          align="center"
+        >
+          <template #default="scope">
+            {{ formatCreatedAt(scope.row.createdAt) }}
+          </template>
+        </el-table-column>
         <el-table-column
           label="操作"
           width="180"
+          fixed="right"
         >
           <template #default="scope">
             <el-button
@@ -231,6 +266,18 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <!-- 空状态 -->
+      <el-empty
+        v-else-if="!loading && userList.length === 0"
+        description="暂无用户数据"
+        style="margin-top: 40px;"
+      >
+        <el-button type="primary" @click="handleAdd">
+          <el-icon><Plus /></el-icon>
+          新增用户
+        </el-button>
+      </el-empty>
 
       <div class="pagination-container">
         <el-pagination
@@ -437,6 +484,33 @@ import { USER_STATUS, USER_STATUS_OPTIONS, getUserStatusTagType } from '@/consta
 
 const logStore = useLogStore()
 
+// 格式化创建时间
+const formatCreatedAt = (createdAt) => {
+  if (!createdAt) return '未知时间'
+
+  try {
+    // 如果是字符串格式（ISO 8601），直接使用 formatDateTime
+    if (typeof createdAt === 'string') {
+      return formatDateTime(createdAt)
+    }
+
+    // 如果是数组格式 [year, month, day, hour, minute, second]
+    if (Array.isArray(createdAt) && createdAt.length >= 3) {
+      const year = createdAt[0]
+      const month = String(createdAt[1]).padStart(2, '0')
+      const day = String(createdAt[2]).padStart(2, '0')
+      const hour = String(createdAt[3] || 0).padStart(2, '0')
+      const minute = String(createdAt[4] || 0).padStart(2, '0')
+      const second = String(createdAt[5] || 0).padStart(2, '0')
+      return `${year}-${month}-${day} ${hour}:${minute}:${second}`
+    }
+  } catch (e) {
+    console.error('时间格式化失败:', createdAt, e)
+  }
+
+  return '未知时间'
+}
+
 // MBTI 数据配置
 const mbtiOptions = ref(MBTI_OPTIONS)
 
@@ -630,9 +704,15 @@ const handleEdit = (row) => {
 // 删除用户
 const handleDelete = (row) => {
   ElMessageBox.confirm(
-    `确定要删除用户 ${row.username} 吗？`,
-    '警告',
-    { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
+    `确定要删除用户 "${row.username}" (${row.fullName}) 吗？删除后该用户的所有信息将被永久移除，此操作不可恢复。`,
+    '删除用户确认',
+    {
+      confirmButtonText: '确认删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+      distinguishCancelAndClose: true,
+      confirmButtonClass: 'el-button--danger'
+    }
   ).then(() => {
     deleteUser(row.userId).then(() => {
       getList()
@@ -640,9 +720,10 @@ const handleDelete = (row) => {
       logStore.addLog(`删除了用户 "${row.username}" (ID: ${row.userId})`)
     }).catch(() => {
       logStore.addLog(`删除用户 "${row.username}" 失败`, 'error')
+      ElMessage({ type: 'error', message: '删除失败，请稍后重试' })
     })
   }).catch(() => {
-    ElMessage({ type: 'info', message: '已取消删除' })
+    // 用户取消删除，不显示提示
   })
 }
 
