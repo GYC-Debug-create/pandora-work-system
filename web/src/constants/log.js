@@ -28,13 +28,6 @@ export const LOG_TYPE_CONFIG = {
   }
 }
 
-// 日志类型选项（用于下拉选择）
-export const LOG_TYPE_OPTIONS = [
-  { label: '全部', value: '' },
-  { label: '操作', value: LOG_TYPES.OPERATION },
-  { label: '系统', value: LOG_TYPES.SYSTEM },
-  { label: '错误', value: LOG_TYPES.ERROR }
-]
 
 // 日志保留天数
 export const LOG_RETENTION_DAYS = 7
