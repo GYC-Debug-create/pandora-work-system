@@ -2,6 +2,8 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 // Element Plus 按需引入 - 由 unplugin-vue-components 自动处理
 import 'element-plus/dist/index.css'
+// Element Plus 暗色主题
+import 'element-plus/theme-chalk/dark/css-vars.css'
 
 import App from './App.vue'
 import router from './router'
@@ -9,6 +11,7 @@ import { setLogStore } from './utils/request'
 import { useLogStore } from './store/log'
 
 import './assets/styles/main.css'
+import './assets/styles/theme.css'
 
 const app = createApp(App)
 

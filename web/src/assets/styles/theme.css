@@ -1,0 +1,192 @@
+/* 主题变量定义 */
+
+/* 浅色主题（默认） */
+:root {
+  /* 背景色 */
+  --bg-color: #f5f7fa;
+  --bg-color-secondary: #ffffff;
+  --bg-color-overlay: #ffffff;
+  
+  /* 文字颜色 */
+  --text-color-primary: #303133;
+  --text-color-regular: #606266;
+  --text-color-secondary: #909399;
+  --text-color-placeholder: #c0c4cc;
+  
+  /* 边框颜色 */
+  --border-color: #dcdfe6;
+  --border-color-light: #e4e7ed;
+  --border-color-lighter: #ebeef5;
+  
+  /* 卡片背景 */
+  --card-bg-color: #ffffff;
+  
+  /* 侧边栏 */
+  --sidebar-bg-color: #304156;
+  --sidebar-logo-bg-color: #2b3649;
+  --sidebar-text-color: #bfcbd9;
+  
+  /* 头部 */
+  --header-bg-color: #ffffff;
+  --header-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+  
+  /* 主内容区 */
+  --main-bg-color: #f5f7fa;
+}
+
+/* 暗色主题 */
+.dark {
+  /* 背景色 */
+  --bg-color: #141414;
+  --bg-color-secondary: #1d1d1d;
+  --bg-color-overlay: #262626;
+  
+  /* 文字颜色 */
+  --text-color-primary: #e8e8e8;
+  --text-color-regular: #c9c9c9;
+  --text-color-secondary: #a3a3a3;
+  --text-color-placeholder: #6d6d6d;
+  
+  /* 边框颜色 */
+  --border-color: #434343;
+  --border-color-light: #363636;
+  --border-color-lighter: #2b2b2b;
+  
+  /* 卡片背景 */
+  --card-bg-color: #1d1d1d;
+  
+  /* 侧边栏 */
+  --sidebar-bg-color: #1a1a1a;
+  --sidebar-logo-bg-color: #0f0f0f;
+  --sidebar-text-color: #a3a3a3;
+  
+  /* 头部 */
+  --header-bg-color: #1d1d1d;
+  --header-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  
+  /* 主内容区 */
+  --main-bg-color: #141414;
+}
+
+/* 全局过渡效果 */
+body,
+.layout-container,
+.sidebar-container,
+.header,
+.main-content,
+.page-container,
+.el-card {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* 应用主题变量到全局元素 */
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color-primary);
+}
+
+/* 布局容器 */
+.main-content {
+  background-color: var(--main-bg-color);
+}
+
+/* 页面容器 */
+.page-container {
+  background-color: var(--card-bg-color);
+  border-color: var(--border-color-lighter);
+  color: var(--text-color-primary);
+}
+
+/* 页面标题 */
+.page-title {
+  color: var(--text-color-primary);
+}
+
+/* 侧边栏 */
+.sidebar-container {
+  background-color: var(--sidebar-bg-color) !important;
+}
+
+.logo-container {
+  background-color: var(--sidebar-logo-bg-color) !important;
+}
+
+/* 头部 */
+.header {
+  background-color: var(--header-bg-color) !important;
+  box-shadow: var(--header-shadow) !important;
+  color: var(--text-color-primary);
+}
+
+/* Element Plus 卡片在暗色模式下的样式 */
+.dark .el-card {
+  background-color: var(--card-bg-color);
+  border-color: var(--border-color);
+}
+
+/* 暗色模式下的表格 */
+.dark .el-table {
+  --el-table-bg-color: var(--card-bg-color);
+  --el-table-tr-bg-color: var(--card-bg-color);
+  --el-table-header-bg-color: var(--bg-color-secondary);
+}
+
+/* 暗色模式下的输入框 */
+.dark .el-input__wrapper {
+  background-color: var(--bg-color-secondary);
+}
+
+/* 暗色模式下的下拉菜单 */
+.dark .el-select-dropdown {
+  background-color: var(--bg-color-overlay);
+}
+
+/* 暗色模式下的弹窗 */
+.dark .el-dialog {
+  background-color: var(--card-bg-color);
+}
+
+/* 暗色模式下的消息框 */
+.dark .el-message-box {
+  background-color: var(--card-bg-color);
+}
+
+/* 侧边栏菜单样式 */
+.el-menu {
+  background-color: var(--sidebar-bg-color) !important;
+  border-right: none;
+}
+
+.el-menu-item,
+.el-sub-menu__title {
+  color: var(--sidebar-text-color) !important;
+}
+
+.el-menu-item:hover,
+.el-sub-menu__title:hover {
+  background-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.el-menu-item.is-active {
+  background-color: rgba(64, 158, 255, 0.1) !important;
+}
+
+/* 暗色模式下的侧边栏菜单 */
+.dark .el-menu {
+  background-color: var(--sidebar-bg-color) !important;
+}
+
+.dark .el-menu-item,
+.dark .el-sub-menu__title {
+  color: var(--sidebar-text-color) !important;
+}
+
+.dark .el-menu-item:hover,
+.dark .el-sub-menu__title:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.dark .el-menu-item.is-active {
+  background-color: rgba(64, 158, 255, 0.15) !important;
+  color: #409EFF !important;
+}

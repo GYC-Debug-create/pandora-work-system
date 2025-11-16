@@ -29,6 +29,20 @@
             <Breadcrumb />
           </div>
           <div class="header-right">
+            <!-- 主题切换按钮 -->
+            <el-tooltip
+              :content="isDark ? '切换到浅色模式' : '切换到暗色模式'"
+              placement="bottom"
+            >
+              <el-icon
+                class="theme-toggle"
+                @click="toggleTheme"
+              >
+                <Sunny v-if="isDark" />
+                <Moon v-else />
+              </el-icon>
+            </el-tooltip>
+
             <el-dropdown
               trigger="click"
               @command="handleCommand"
@@ -65,21 +79,34 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Sunny, Moon } from '@element-plus/icons-vue'
 import Sidebar from './components/Sidebar.vue'
 import Breadcrumb from './components/Breadcrumb.vue'
 import ProfileModal from './components/ProfileModal.vue'
 import { useLogStore } from '@/store/log'
+import { useThemeStore } from '@/store/theme'
 
 const isCollapse = ref(false)
 const router = useRouter()
 const profileModalVisible = ref(false)
 const logStore = useLogStore()
+const themeStore = useThemeStore()
+
+// 计算当前是否为暗色主题
+const isDark = computed(() => themeStore.theme === 'dark')
 
 const toggleSidebar = () => {
   isCollapse.value = !isCollapse.value
+}
+
+// 切换主题
+const toggleTheme = () => {
+  themeStore.toggleTheme()
+  const themeName = isDark.value ? '暗色' : '浅色'
+  ElMessage.success(`已切换到${themeName}模式`)
 }
 
 const handleCommand = (command) => {
@@ -116,9 +143,9 @@ const handleCommand = (command) => {
 }
 
 .sidebar-container {
-  background-color: #304156;
+  background-color: var(--sidebar-bg-color);
   height: 100vh;
-  transition: width 0.28s;
+  transition: width 0.28s, background-color 0.3s ease;
   overflow-x: hidden;
 }
 
@@ -127,7 +154,8 @@ const handleCommand = (command) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #2b3649;
+  background-color: var(--sidebar-logo-bg-color);
+  transition: background-color 0.3s ease;
 }
 
 .logo-title {
@@ -137,12 +165,14 @@ const handleCommand = (command) => {
 }
 
 .header {
-  background-color: #fff;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+  background-color: var(--header-bg-color);
+  box-shadow: var(--header-shadow);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  color: var(--text-color-primary);
 }
 
 .header-left {
@@ -159,6 +189,18 @@ const handleCommand = (command) => {
 .header-right {
   display: flex;
   align-items: center;
+  gap: 20px;
+}
+
+.theme-toggle {
+  font-size: 20px;
+  cursor: pointer;
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.theme-toggle:hover {
+  color: #409EFF;
+  transform: scale(1.1);
 }
 
 .avatar-container {
@@ -173,8 +215,9 @@ const handleCommand = (command) => {
 
 .main-content {
   padding: 20px;
-  background-color: #f5f7fa;
+  background-color: var(--main-bg-color);
   height: calc(100vh - 60px);
   overflow-y: auto;
+  transition: background-color 0.3s ease;
 }
 </style>

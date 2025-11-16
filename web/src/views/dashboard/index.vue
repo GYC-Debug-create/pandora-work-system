@@ -469,12 +469,12 @@ onMounted(() => {
 .card-value {
   font-size: 28px;
   font-weight: bold;
-  color: #303133;
+  color: var(--text-color-primary);
   margin-bottom: 10px;
 }
 
 .card-footer {
   font-size: 14px;
-  color: #909399;
+  color: var(--text-color-secondary);
 }
 </style>
