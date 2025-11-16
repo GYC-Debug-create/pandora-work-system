@@ -69,4 +69,17 @@ export function deleteUser(id) {
   })
 }
 
+/**
+ * 修改密码
+ * @param {Object} data { oldPassword: 'xxx', newPassword: 'xxx' }
+ * @returns {Promise}
+ */
+export function changePassword(data) {
+  return request({
+    url: '/api/user/change-password',
+    method: 'post',
+    data
+  })
+}
+
 // 注意：获取用户详情 (getUserDetail) 在前端代码中未使用，暂不实现对接
