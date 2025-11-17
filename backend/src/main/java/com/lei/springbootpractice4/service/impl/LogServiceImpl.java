@@ -47,7 +47,7 @@ public class LogServiceImpl implements LogService {
      * 或者使用 REQUIRES_NEW 确保日志提交
      */
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW) // 确保日志写入在独立事务中
+    @Transactional // 确保日志写入在独立事务中
     public void logTaskActivity(UsersPojo user, TaskPojo task, String activityType, String descriptionSuffix) {
         try {
             String userName = getUserDisplayName(user);
@@ -72,7 +72,7 @@ public class LogServiceImpl implements LogService {
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void logSubTaskActivity(UsersPojo user, SubTaskPojo subTask, String activityType, String descriptionPrefix) {
         try {
             String userName = getUserDisplayName(user);

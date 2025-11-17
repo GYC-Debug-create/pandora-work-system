@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page; // 引入Page
 import com.lei.springbootpractice4.config.JwtUtil;
 import com.lei.springbootpractice4.mapper.RoleMapper;
 import com.lei.springbootpractice4.mapper.UserMapper;
+import com.lei.springbootpractice4.pojo.RolePojo;
 import com.lei.springbootpractice4.pojo.UsersPojo;
 import com.lei.springbootpractice4.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -63,6 +64,7 @@ public class UserController { // 移除类级别的 RequestMapping 或修改
         if (loginUser != null) {
             loginUser.setPasswordHash(null);
 
+
             // --- 修改这里 ---
             // 创建 UserDetails，仍然使用 username 作为 principal
             final UserDetails userDetails = new User(loginUser.getUsername(), "", new ArrayList<>());
@@ -70,6 +72,13 @@ public class UserController { // 移除类级别的 RequestMapping 或修改
             Map<String, Object> claims = new HashMap<>();
             claims.put("userId", loginUser.getUserId()); // <--- 添加 userId 到 Claims
             // 使用包含 Claims 的方法生成 Token (需要修改 JwtUtil)
+            if (loginUser.getRoleId() != null) {
+                RolePojo role = roleMapper.selectById(loginUser.getRoleId());
+                if (role != null) {
+                    // 将角色名放入 claims，键名为 "role"
+                    claims.put("role", role.getRoleName());
+                }
+            }
             final String token = jwtUtil.generateToken(claims, userDetails.getUsername());
             // --- 修改结束 ---
 
