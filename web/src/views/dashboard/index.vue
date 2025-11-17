@@ -1,70 +1,207 @@
 <template>
   <div class="app-container">
     <div class="dashboard-container">
+      <!-- 今日概况卡片区 -->
+      <div class="section-title">
+        <el-icon><DataAnalysis /></el-icon>
+        <span>今日概况</span>
+      </div>
       <el-row :gutter="20">
-        <el-col :span="8">
-          <el-card class="box-card">
-            <template #header>
-              <div class="card-header">
-                <span>用户总数</span>
+        <el-col :span="6">
+          <el-card class="stat-card">
+            <div class="stat-card-content">
+              <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <el-icon :size="32"><User /></el-icon>
               </div>
-            </template>
-            <div class="card-body">
-              <div class="card-value">{{ userStats.total }}</div>
-              <div class="card-footer">
-                <span>当前系统注册用户总数</span>
-              </div>
-            </div>
-          </el-card>
-        </el-col>
-        <el-col :span="8">
-          <el-card class="box-card">
-            <template #header>
-              <div class="card-header">
-                <span>部门老总</span>
-              </div>
-            </template>
-            <div class="card-body">
-              <div class="card-value">{{ userStats.roles['DEPARTMENT_HEAD'] || 0 }}</div>
-              <div class="card-footer">
-                <span>部门老总数量</span>
+              <div class="stat-info">
+                <div class="stat-value">{{ userStats.total }}</div>
+                <div class="stat-label">用户总数</div>
+                <div class="stat-desc">当前系统注册用户</div>
               </div>
             </div>
           </el-card>
         </el-col>
-        <el-col :span="8">
-          <el-card class="box-card">
-            <template #header>
-              <div class="card-header">
-                <span>系统状态</span>
+        <el-col :span="6">
+          <el-card class="stat-card">
+            <div class="stat-card-content">
+              <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <el-icon :size="32"><Avatar /></el-icon>
               </div>
-            </template>
-            <div class="card-body">
-              <div class="card-value" style="color: #67c23a;">正常</div>
-              <div class="card-footer">
-                <span>系统服务运行中</span>
+              <div class="stat-info">
+                <div class="stat-value">{{ userStats.roles['DEPARTMENT_HEAD'] || 0 }}</div>
+                <div class="stat-label">部门老总</div>
+                <div class="stat-desc">部门负责人数量</div>
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card class="stat-card">
+            <div class="stat-card-content">
+              <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <el-icon :size="32"><Document /></el-icon>
+              </div>
+              <div class="stat-info">
+                <div class="stat-value">{{ todayLogs }}</div>
+                <div class="stat-label">今日日志</div>
+                <div class="stat-desc">今天产生的日志数</div>
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card class="stat-card">
+            <div class="stat-card-content">
+              <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <el-icon :size="32"><CircleCheck /></el-icon>
+              </div>
+              <div class="stat-info">
+                <div class="stat-value">正常</div>
+                <div class="stat-label">系统状态</div>
+                <div class="stat-desc">服务运行中</div>
               </div>
             </div>
           </el-card>
         </el-col>
       </el-row>
-      
-      <el-row :gutter="20" style="margin-top: 20px;">
+
+      <!-- 趋势与分布区域 -->
+      <div class="section-title" style="margin-top: 30px;">
+        <el-icon><TrendCharts /></el-icon>
+        <span>数据分布</span>
+      </div>
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-card class="distribution-card">
+            <template #header>
+              <div class="card-header">
+                <el-icon><UserFilled /></el-icon>
+                <span>用户状态分布</span>
+              </div>
+            </template>
+            <div class="distribution-content">
+              <div class="distribution-item">
+                <div class="distribution-label">
+                  <el-tag type="success" size="small">活跃用户</el-tag>
+                </div>
+                <div class="distribution-bar">
+                  <el-progress
+                    :percentage="userDistribution.activePercent"
+                    :color="'#67c23a'"
+                    :stroke-width="20"
+                  />
+                </div>
+                <div class="distribution-value">{{ userDistribution.active }} 人</div>
+              </div>
+              <div class="distribution-item">
+                <div class="distribution-label">
+                  <el-tag type="danger" size="small">禁用用户</el-tag>
+                </div>
+                <div class="distribution-bar">
+                  <el-progress
+                    :percentage="userDistribution.inactivePercent"
+                    :color="'#f56c6c'"
+                    :stroke-width="20"
+                  />
+                </div>
+                <div class="distribution-value">{{ userDistribution.inactive }} 人</div>
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :span="12">
+          <el-card class="distribution-card">
+            <template #header>
+              <div class="card-header">
+                <el-icon><Tickets /></el-icon>
+                <span>日志类型分布</span>
+              </div>
+            </template>
+            <div class="distribution-content">
+              <div class="distribution-item">
+                <div class="distribution-label">
+                  <el-tag type="info" size="small">操作日志</el-tag>
+                </div>
+                <div class="distribution-bar">
+                  <el-progress
+                    :percentage="logDistribution.operationPercent"
+                    :color="'#409eff'"
+                    :stroke-width="20"
+                  />
+                </div>
+                <div class="distribution-value">{{ logDistribution.operation }} 条</div>
+              </div>
+              <div class="distribution-item">
+                <div class="distribution-label">
+                  <el-tag type="success" size="small">系统日志</el-tag>
+                </div>
+                <div class="distribution-bar">
+                  <el-progress
+                    :percentage="logDistribution.systemPercent"
+                    :color="'#67c23a'"
+                    :stroke-width="20"
+                  />
+                </div>
+                <div class="distribution-value">{{ logDistribution.system }} 条</div>
+              </div>
+              <div class="distribution-item">
+                <div class="distribution-label">
+                  <el-tag type="danger" size="small">错误日志</el-tag>
+                </div>
+                <div class="distribution-bar">
+                  <el-progress
+                    :percentage="logDistribution.errorPercent"
+                    :color="'#f56c6c'"
+                    :stroke-width="20"
+                  />
+                </div>
+                <div class="distribution-value">{{ logDistribution.error }} 条</div>
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+      </el-row>
+
+      <!-- 最近操作日志区域 -->
+      <div class="section-title" style="margin-top: 30px;">
+        <el-icon><List /></el-icon>
+        <span>最近活动</span>
+      </div>
+      <el-row :gutter="20">
         <el-col :span="24">
           <el-card class="box-card">
             <template #header>
               <div class="card-header">
                 <span>最近操作日志</span>
                 <div>
-                  <el-button size="small" @click="handleExportCSV">导出CSV</el-button>
-                  <el-button size="small" @click="handleExportJSON">导出JSON</el-button>
-                  <el-button size="small" type="danger" @click="handleClearAll">清空全部</el-button>
+                  <el-button
+                    size="small"
+                    @click="handleExportCSV"
+                  >
+                    导出CSV
+                  </el-button>
+                  <el-button
+                    size="small"
+                    @click="handleExportJSON"
+                  >
+                    导出JSON
+                  </el-button>
+                  <el-button
+                    size="small"
+                    type="danger"
+                    @click="handleClearAll"
+                  >
+                    清空全部
+                  </el-button>
                 </div>
               </div>
             </template>
             
             <!-- 筛选区域 -->
-            <el-form :inline="true" style="margin-bottom: 20px;">
+            <el-form
+              :inline="true"
+              style="margin-bottom: 20px;"
+            >
               <el-form-item label="日期范围">
                 <el-date-picker
                   v-model="dateRange"
@@ -77,55 +214,134 @@
                 />
               </el-form-item>
               <el-form-item label="类型">
-                <el-select v-model="filterType" placeholder="全部" clearable size="small" style="width: 120px;">
-                  <el-option label="全部" value=""></el-option>
-                  <el-option label="操作" value="operation"></el-option>
-                  <el-option label="系统" value="system"></el-option>
-                  <el-option label="错误" value="error"></el-option>
+                <el-select
+                  v-model="filterType"
+                  placeholder="全部"
+                  clearable
+                  size="small"
+                  style="width: 120px;"
+                >
+                  <el-option
+                    label="全部"
+                    value=""
+                  />
+                  <el-option
+                    label="操作"
+                    value="operation"
+                  />
+                  <el-option
+                    label="系统"
+                    value="system"
+                  />
+                  <el-option
+                    label="错误"
+                    value="error"
+                  />
                 </el-select>
               </el-form-item>
               <el-form-item label="关键词">
-                <el-input v-model="filterKeyword" placeholder="搜索日志内容" clearable size="small" style="width: 200px;" />
+                <el-input
+                  v-model="filterKeyword"
+                  placeholder="搜索日志内容"
+                  clearable
+                  size="small"
+                  style="width: 200px;"
+                />
               </el-form-item>
               <el-form-item>
-                <el-button type="primary" size="small" @click="applyFilter">应用筛选</el-button>
-                <el-button size="small" @click="resetFilter">重置</el-button>
+                <el-button
+                  type="primary"
+                  size="small"
+                  @click="applyFilter"
+                >
+                  应用筛选
+                </el-button>
+                <el-button
+                  size="small"
+                  @click="resetFilter"
+                >
+                  重置
+                </el-button>
               </el-form-item>
             </el-form>
 
             <!-- 日志列表 -->
             <div v-if="filteredActivities.length > 0">
-              <el-checkbox v-model="selectAll" @change="handleSelectAll" style="margin-bottom: 10px;">全选</el-checkbox>
+              <el-checkbox
+                v-model="selectAll"
+                style="margin-bottom: 10px;"
+                @change="handleSelectAll"
+              >
+                全选
+              </el-checkbox>
               <el-timeline>
                 <el-timeline-item
-                  v-for="(activity, index) in filteredActivities"
+                  v-for="activity in filteredActivities"
                   :key="activity.originalIndex"
                   :timestamp="activity.timestamp"
-                  :type="getTimelineType(activity.type)"
+                  :type="getLogTimelineType(activity.type)"
                 >
-                  <el-checkbox 
-                    :model-value="activity.selected" 
-                    @change="toggleSelect(activity)"
-                    style="margin-right: 10px;">
-                  </el-checkbox>
-                  {{ activity.content }}
-                  <el-tag v-if="activity.type" size="small" :type="getTagType(activity.type)" style="margin-left: 10px;">
-                    {{ getTypeLabel(activity.type) }}
-                  </el-tag>
+                  <div class="log-item">
+                    <el-checkbox
+                      :model-value="activity.selected"
+                      style="margin-right: 10px;"
+                      @change="toggleSelect(activity)"
+                    />
+                    <el-icon
+                      :size="16"
+                      :class="'log-icon log-icon-' + activity.type"
+                      style="margin-right: 8px;"
+                    >
+                      <Operation v-if="activity.type === 'operation'" />
+                      <Setting v-else-if="activity.type === 'system'" />
+                      <WarningFilled v-else-if="activity.type === 'error'" />
+                      <InfoFilled v-else />
+                    </el-icon>
+                    <span class="log-content">{{ activity.content }}</span>
+                    <el-tag
+                      v-if="activity.type"
+                      size="small"
+                      :type="getLogTagType(activity.type)"
+                      style="margin-left: 10px;"
+                    >
+                      {{ getLogTypeLabel(activity.type) }}
+                    </el-tag>
+                  </div>
                 </el-timeline-item>
               </el-timeline>
               
               <!-- 批量操作 -->
-              <div style="margin-top: 20px;" v-if="selectedCount > 0">
-                <el-alert :title="`已选中 ${selectedCount} 条日志`" type="info" :closable="false">
+              <div
+                v-if="selectedCount > 0"
+                style="margin-top: 20px;"
+              >
+                <el-alert
+                  :title="`已选中 ${selectedCount} 条日志`"
+                  type="info"
+                  :closable="false"
+                >
                   <template #default>
-                    <el-button size="small" type="danger" @click="handleDeleteSelected">删除选中</el-button>
-                    <el-button size="small" @click="handleCancelSelect">取消选择</el-button>
+                    <el-button
+                      size="small"
+                      type="danger"
+                      @click="handleDeleteSelected"
+                    >
+                      删除选中
+                    </el-button>
+                    <el-button
+                      size="small"
+                      @click="handleCancelSelect"
+                    >
+                      取消选择
+                    </el-button>
                   </template>
                 </el-alert>
               </div>
             </div>
-            <el-empty v-else description="暂无日志记录" />
+            <el-empty
+              v-else
+              description="暂无日志记录"
+            />
           </el-card>
         </el-col>
       </el-row>
@@ -138,13 +354,37 @@ import { ref, onMounted, computed } from 'vue'
 import { getUserList } from '@/api/user'
 import { useLogStore } from '@/store/log'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import {
+  DataAnalysis,
+  TrendCharts,
+  User,
+  Avatar,
+  Document,
+  CircleCheck,
+  UserFilled,
+  Tickets,
+  List,
+  Operation,
+  Setting,
+  WarningFilled,
+  InfoFilled
+} from '@element-plus/icons-vue'
+import {
+  LOG_TYPES,
+  getLogTypeLabel,
+  getLogTagType,
+  getLogTimelineType
+} from '@/constants/log'
+import { USER_STATUS } from '@/constants/user'
 
 const logStore = useLogStore()
 
 // 用户统计数据
 const userStats = ref({
   total: 0,
-  roles: {}
+  roles: {},
+  active: 0,
+  inactive: 0
 })
 
 // 日志筛选相关
@@ -157,6 +397,45 @@ const selectedIndexes = ref(new Set()) // 使用 Set 存储选中的日志索引
 
 // 最近操作日志 - 直接从Pinia store中获取
 const activities = computed(() => logStore.logs)
+
+// 今日日志数量
+const todayLogs = computed(() => {
+  const today = new Date().toISOString().split('T')[0]
+  return activities.value.filter(log => {
+    const logDate = new Date(log.timestamp).toISOString().split('T')[0]
+    return logDate === today
+  }).length
+})
+
+// 用户状态分布
+const userDistribution = computed(() => {
+  const total = userStats.value.total || 1 // 避免除以0
+  const active = userStats.value.active || 0
+  const inactive = userStats.value.inactive || 0
+  return {
+    active,
+    inactive,
+    activePercent: Math.round((active / total) * 100),
+    inactivePercent: Math.round((inactive / total) * 100)
+  }
+})
+
+// 日志类型分布
+const logDistribution = computed(() => {
+  const logs = activities.value
+  const total = logs.length || 1 // 避免除以0
+  const operation = logs.filter(log => log.type === LOG_TYPES.OPERATION).length
+  const system = logs.filter(log => log.type === LOG_TYPES.SYSTEM).length
+  const error = logs.filter(log => log.type === LOG_TYPES.ERROR).length
+  return {
+    operation,
+    system,
+    error,
+    operationPercent: Math.round((operation / total) * 100),
+    systemPercent: Math.round((system / total) * 100),
+    errorPercent: Math.round((error / total) * 100)
+  }
+})
 
 // 筛选后的日志
 const filteredActivities = computed(() => {
@@ -317,50 +596,24 @@ const handleExportJSON = () => {
   ElMessage.success('导出成功')
 }
 
-// 获取时间线类型
-const getTimelineType = (type) => {
-  const typeMap = {
-    'operation': 'primary',
-    'system': 'success',
-    'error': 'danger'
-  }
-  return typeMap[type] || 'primary'
-}
-
-// 获取标签类型
-const getTagType = (type) => {
-  const typeMap = {
-    'operation': 'info',
-    'system': 'success',
-    'error': 'danger'
-  }
-  return typeMap[type] || 'info'
-}
-
-// 获取类型标签
-const getTypeLabel = (type) => {
-  const labelMap = {
-    'operation': '操作',
-    'system': '系统',
-    'error': '错误'
-  }
-  return labelMap[type] || '未知'
-}
-
 // 获取用户数据并进行统计
 const fetchUserStats = async () => {
   try {
     const response = await getUserList({ pageNum: 1, pageSize: 100 })
     // 后端返回的是 MyBatis-Plus 的 Page 对象：{ records: [...], total: xx }
     const users = Array.isArray(response?.records) ? response.records : []
-    
+
     userStats.value.total = response?.total || users.length
-    
+
     const rolesCount = users.reduce((acc, user) => {
       acc[user.roleName] = (acc[user.roleName] || 0) + 1
       return acc
     }, {})
     userStats.value.roles = rolesCount
+
+    // 统计用户状态分布
+    userStats.value.active = users.filter(user => user.status === USER_STATUS.ACTIVE).length
+    userStats.value.inactive = users.filter(user => user.status === USER_STATUS.INACTIVE).length
   } catch (error) {
     console.error("获取用户数据失败:", error)
     logStore.addLog('获取仪表盘统计数据失败', 'error')
@@ -377,6 +630,124 @@ onMounted(() => {
   padding: 20px;
 }
 
+/* 区块标题 */
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color-primary);
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--el-border-color-lighter);
+}
+
+.section-title .el-icon {
+  font-size: 20px;
+  color: var(--el-color-primary);
+}
+
+/* 统计卡片 */
+.stat-card {
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+  border: 1px solid var(--el-border-color-lighter);
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card-content {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+}
+
+.stat-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  margin-right: 16px;
+  flex-shrink: 0;
+}
+
+.stat-info {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: bold;
+  color: var(--text-color-primary);
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-color-regular);
+  margin-bottom: 2px;
+}
+
+.stat-desc {
+  font-size: 12px;
+  color: var(--text-color-secondary);
+}
+
+/* 分布卡片 */
+.distribution-card {
+  margin-bottom: 20px;
+  height: 100%;
+}
+
+.distribution-card .card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.distribution-content {
+  padding: 10px 0;
+}
+
+.distribution-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 12px;
+}
+
+.distribution-item:last-child {
+  margin-bottom: 0;
+}
+
+.distribution-label {
+  width: 80px;
+  flex-shrink: 0;
+}
+
+.distribution-bar {
+  flex: 1;
+}
+
+.distribution-value {
+  width: 60px;
+  text-align: right;
+  font-weight: 600;
+  color: var(--text-color-primary);
+  flex-shrink: 0;
+}
+
+/* 日志卡片 */
 .box-card {
   margin-bottom: 20px;
 }
@@ -387,20 +758,30 @@ onMounted(() => {
   align-items: center;
 }
 
-.card-body {
-  text-align: center;
-  padding: 20px 0;
+/* 日志项 */
+.log-item {
+  display: flex;
+  align-items: center;
 }
 
-.card-value {
-  font-size: 28px;
-  font-weight: bold;
-  color: #303133;
-  margin-bottom: 10px;
+.log-content {
+  flex: 1;
+  color: var(--text-color-primary);
 }
 
-.card-footer {
-  font-size: 14px;
-  color: #909399;
+.log-icon {
+  flex-shrink: 0;
+}
+
+.log-icon-operation {
+  color: var(--el-color-info);
+}
+
+.log-icon-system {
+  color: var(--el-color-success);
+}
+
+.log-icon-error {
+  color: var(--el-color-danger);
 }
 </style>

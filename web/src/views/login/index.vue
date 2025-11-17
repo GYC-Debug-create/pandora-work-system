@@ -8,42 +8,45 @@
         </div>
       </template>
       <el-form
-          ref="loginFormRef"
-          :model="loginForm"
-          :rules="loginRules"
-          @keyup.enter="handleLogin"
+        ref="loginFormRef"
+        :model="loginForm"
+        :rules="loginRules"
+        @keyup.enter="handleLogin"
       >
         <el-form-item prop="username">
           <el-input
-              v-model="loginForm.username"
-              placeholder="用户名"
-              :prefix-icon="User"
-              size="large"
+            v-model="loginForm.username"
+            placeholder="用户名"
+            :prefix-icon="User"
+            size="large"
           />
         </el-form-item>
         <el-form-item prop="password">
           <el-input
-              v-model="loginForm.password"
-              type="password"
-              placeholder="密码"
-              show-password
-              :prefix-icon="Lock"
-              size="large"
+            v-model="loginForm.password"
+            type="password"
+            placeholder="密码"
+            show-password
+            :prefix-icon="Lock"
+            size="large"
           />
         </el-form-item>
         <el-form-item>
           <el-button
-              type="primary"
-              style="width: 100%;"
-              size="large"
-              :loading="loading"
-              @click="handleLogin"
+            type="primary"
+            style="width: 100%;"
+            size="large"
+            :loading="loading"
+            @click="handleLogin"
           >
             登 录
           </el-button>
         </el-form-item>
       </el-form>
-      <p id="message-area" style="color: red; text-align: center; min-height: 1.2em;"></p>
+      <p
+        id="message-area"
+        style="color: red; text-align: center; min-height: 1.2em;"
+      />
     </el-card>
   </div>
 </template>
@@ -101,14 +104,15 @@ const handleLogin = () => {
         // 记录系统日志
         logStore.addLog(`用户 ${userData.username} 登录系统`, 'system');
 
-        router.push('/'); // 跳转首页
+        router.push('/')
       }).catch(error => {
-        // ... (错误处理保持不变) ...
+        // 登录失败的错误处理
+        const errorMessage = error.response?.data || error.message || '登录失败，请重试'
+        ElMessage.error(errorMessage)
       }).finally(() => {
-        loading.value = false;
-      });
+        loading.value = false
+      })
     } else {
-      console.log('表单校验失败');
       return false;
     }
   });

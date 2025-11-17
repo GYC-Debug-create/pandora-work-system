@@ -5,7 +5,8 @@ body {
   font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f5f7fa;
+  background-color: var(--bg-color);
+  color: var(--text-color-primary);
 }
 
 /* 布局样式 */
@@ -14,10 +15,11 @@ body {
 }
 
 .page-container {
-  background-color: #fff;
+  background-color: var(--card-bg-color);
   border-radius: 4px;
   padding: 20px;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+  box-shadow: var(--header-shadow);
+  color: var(--text-color-primary);
 }
 
 .page-header {
