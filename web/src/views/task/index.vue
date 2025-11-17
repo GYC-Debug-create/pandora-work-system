@@ -181,6 +181,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Clock, Document } from '@element-plus/icons-vue'
 import { useLogStore } from '@/store/log'
 import { formatDateTime } from '@/utils/format'
+import { showErrorMessage } from '@/utils/error'
 import {
   getCompanyMatters,
   createCompanyMatter,
@@ -250,7 +251,7 @@ const getTaskList = () => {
   }).catch(error => {
     console.error('获取事项列表失败:', error)
     logStore.addLog('获取事项列表失败', 'error')
-    ElMessage.error('获取事项列表失败')
+    showErrorMessage(error, '获取事项列表失败')
     taskList.value = []
     loading.value = false
   })
@@ -319,8 +320,7 @@ const submitForm = () => {
     }).catch(error => {
       console.error(`${action}事项失败:`, error)
       logStore.addLog(`${action}事项 "${dataToSend.title}" 失败`, 'error')
-      const errorMessage = error.response?.data || `${action}失败`
-      ElMessage.error(errorMessage)
+      showErrorMessage(error, `${action}失败`)
     })
   })
 }
