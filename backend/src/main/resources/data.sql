@@ -63,3 +63,6 @@ ALTER TABLE deliverables ALTER COLUMN deliverable_id RESTART WITH (SELECT COALES
 -- 如果你DELIVERABLES表里本来就没数据，上面的INSERT DELIVERABLES可以删掉，
 -- 你的脚本里显示 "0 +/- SELECT COUNT" 所以理论上不该有 Insert。
 -- 我上面写了一个占位符，如果你运行报错，直接把 INSERT INTO DELIVERABLES 这一整段删掉即可。
+
+-- 重置 company_matters 表的自增序列（修复创建新事项时的主键冲突问题）
+ALTER TABLE company_matters ALTER COLUMN matter_id RESTART WITH 7;
