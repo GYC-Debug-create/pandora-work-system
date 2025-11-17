@@ -43,10 +43,6 @@
           </el-button>
         </el-form-item>
       </el-form>
-      <p
-        id="message-area"
-        style="color: red; text-align: center; min-height: 1.2em;"
-      />
     </el-card>
   </div>
 </template>
@@ -54,16 +50,16 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus'; // ElMessage 用于成功提示
+import { ElMessage } from 'element-plus';
 import { User, Lock } from '@element-plus/icons-vue';
-import { login } from '@/api/user'; // <--- 引入真实的 login API
-import { useLogStore } from '@/store/log'; // 引入日志 store
+import { login } from '@/api/user';
+import { useLogStore } from '@/store/log';
+import { showErrorMessage } from '@/utils/error';
 
 const router = useRouter();
-const logStore = useLogStore(); // 获取日志 store
+const logStore = useLogStore();
 const loginFormRef = ref(null);
 const loading = ref(false);
-const messageArea = ref(null); // 用于显示错误信息
 
 const loginForm = ref({
   username: 'admin', // 可以保留默认值方便测试
@@ -75,30 +71,23 @@ const loginRules = {
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
 };
 
-// 获取 message-area DOM 元素 (Vue 3 推荐方式)
-import { onMounted } from 'vue';
-onMounted(() => {
-  messageArea.value = document.getElementById('message-area');
-});
-
 const handleLogin = () => {
   loginFormRef.value.validate((valid) => {
     if (valid) {
       loading.value = true;
-      if (messageArea.value) messageArea.value.textContent = '';
 
       login({
         username: loginForm.value.username,
-        passwordHash: loginForm.value.password // 发送原始密码
-      }).then(response => { // <--- response 现在是 { token: '...', user: {...} }
+        passwordHash: loginForm.value.password // 内部用 password，发送时映射为 passwordHash
+      }).then(response => {
         // 登录成功
         const token = response.token;
-        const userData = response.user; // 用户信息在 user 字段下
+        const userData = response.user;
 
         ElMessage.success(`登录成功，欢迎 ${userData.username}`);
 
         // 存储 JWT Token 到 localStorage
-        localStorage.setItem('admin-token', token); // <--- 存储真实的 Token
+        localStorage.setItem('admin-token', token);
         localStorage.setItem('user-info', JSON.stringify(userData));
 
         // 记录系统日志
@@ -106,9 +95,8 @@ const handleLogin = () => {
 
         router.push('/')
       }).catch(error => {
-        // 登录失败的错误处理
-        const errorMessage = error.response?.data || error.message || '登录失败，请重试'
-        ElMessage.error(errorMessage)
+        // 使用统一的错误处理工具
+        showErrorMessage(error, '登录失败，请重试')
       }).finally(() => {
         loading.value = false
       })

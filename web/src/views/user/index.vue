@@ -316,10 +316,10 @@
           <el-form-item
             v-if="!userForm.userId"
             label="初始密码"
-            prop="passwordHash"
+            prop="password"
           >
             <el-input
-              v-model="userForm.passwordHash"
+              v-model="userForm.password"
               type="password"
               placeholder="请输入初始密码"
               show-password
@@ -479,6 +479,7 @@ import { getDepartments } from '@/api/department'
 import { getRoles } from '@/api/role'
 import { useLogStore } from '@/store/log'
 import { formatDateTime } from '@/utils/format'
+import { showErrorMessage } from '@/utils/error'
 import { MBTI_OPTIONS } from '@/constants/mbti'
 import { USER_STATUS, USER_STATUS_OPTIONS, getUserStatusTagType } from '@/constants/user'
 
@@ -528,7 +529,7 @@ const dialogTitle = ref('')
 const initialFormState = {
   userId: undefined,
   username: '',
-  passwordHash: '',
+  password: '', // 内部使用 password，发送时映射为 passwordHash
   fullName: '',
   email: '',
   roleId: null,
@@ -557,7 +558,7 @@ const rules = {
     { required: true, message: '请输入用户名', trigger: 'blur' },
     { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
   ],
-  passwordHash: [
+  password: [
     { required: true, message: '请输入初始密码', trigger: 'blur' },
     { min: 6, message: '密码长度至少6位', trigger: 'blur' }
   ],
@@ -587,7 +588,7 @@ const fetchDepartments = () => {
     }
   }).catch(error => {
     console.error('获取部门列表失败:', error)
-    ElMessage.error('无法加载部门列表')
+    showErrorMessage(error, '无法加载部门列表')
     logStore.addLog('获取部门列表失败', 'error')
   })
 }
@@ -608,21 +609,37 @@ const fetchRoles = () => {
     }
   }).catch(error => {
     console.error('获取角色列表失败:', error)
-    ElMessage.error('无法加载角色列表')
+    showErrorMessage(error, '无法加载角色列表')
     logStore.addLog('获取角色列表失败', 'error')
   })
 }
 
-// 获取用户列表
+// 获取用户列表（防御性处理：兼容 Page 结构和直接数组）
 const getList = () => {
   loading.value = true
   fetchUsers(queryParams.value).then(response => {
-    const users = Array.isArray(response?.records) ? response.records : []
+    // 兼容两种返回格式：
+    // 1. MyBatis-Plus Page: { records: [...], total: xx }
+    // 2. 直接数组: [...]
+    let users = []
+    let totalCount = 0
+
+    if (Array.isArray(response?.records)) {
+      // Page 结构
+      users = response.records
+      totalCount = response.total || users.length
+    } else if (Array.isArray(response)) {
+      // 直接数组
+      users = response
+      totalCount = users.length
+    }
+
     userList.value = users
-    total.value = response?.total || 0
+    total.value = totalCount
     loading.value = false
   }).catch((error) => {
     console.error('获取用户列表失败:', error)
+    showErrorMessage(error, '获取用户列表失败')
     logStore.addLog('获取用户列表失败', 'error')
     userList.value = []
     total.value = 0
@@ -696,7 +713,7 @@ const handleEdit = (row) => {
     status: row.status,
     mbtiType: row.mbtiType,
     departmentId: row.departmentId,
-    passwordHash: ''
+    password: '' // 编辑时不需要密码
   }
   dialogVisible.value = true
 }
@@ -740,8 +757,8 @@ const submitForm = () => {
         email: userForm.value.email,
         mbtiType: userForm.value.mbtiType,
         departmentId: userForm.value.departmentId,
-        roleId: userForm.value.roleId, // 发送 roleId
-        status: userForm.value.status // 发送 status 字段
+        roleId: userForm.value.roleId,
+        status: userForm.value.status
       };
 
       let apiCall;
@@ -753,11 +770,12 @@ const submitForm = () => {
         actionLog = `更新了用户 "${dataToSend.username}" (ID: ${userForm.value.userId}) 的信息`;
         successMsg = '更新成功!';
       } else {
-        if (!userForm.value.passwordHash) {
+        if (!userForm.value.password) {
           ElMessage.error('新增用户时必须提供初始密码');
           return;
         }
-        dataToSend.passwordHash = userForm.value.passwordHash; // 添加密码
+        // 内部用 password，发送时映射为 passwordHash
+        dataToSend.passwordHash = userForm.value.password;
         apiCall = createUser(dataToSend);
         actionLog = `创建了新用户 "${dataToSend.username}"`;
         successMsg = '添加成功!';
@@ -768,8 +786,9 @@ const submitForm = () => {
         ElMessage({ type: 'success', message: successMsg });
         logStore.addLog(actionLog);
         dialogVisible.value = false;
-      }).catch(() => {
+      }).catch((error) => {
         const action = isEdit ? '更新' : '创建';
+        showErrorMessage(error, `${action}用户失败`)
         logStore.addLog(`${action}用户 "${dataToSend.username}" 失败`, 'error');
       });
 
