@@ -1,5 +1,15 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+
+// Google Fonts - Inter
+import '@fontsource/inter/400.css'
+import '@fontsource/inter/500.css'
+import '@fontsource/inter/600.css'
+import '@fontsource/inter/700.css'
+
+// Design Tokens (must load before Element Plus)
+import './styles/design-tokens.css'
+
 // Element Plus 按需引入 - 由 unplugin-vue-components 自动处理
 import 'element-plus/dist/index.css'
 // Element Plus 暗色主题

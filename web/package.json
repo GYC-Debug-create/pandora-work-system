@@ -1,6 +1,7 @@
 {
   "name": "pandora-admin-system",
   "version": "0.1.0",
+  "type": "module",
   "private": true,
   "scripts": {
     "dev": "vite",
@@ -10,6 +11,7 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore"
   },
   "dependencies": {
+    "@fontsource/inter": "^5.2.8",
     "axios": "^1.6.2",
     "element-plus": "^2.4.2",
     "path-browserify": "^1.0.1",

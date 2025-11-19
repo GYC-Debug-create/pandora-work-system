@@ -1,0 +1,142 @@
+/* ============================================
+   Pandora System - Design Tokens
+   Modern Minimalism with Warmth
+   ============================================ */
+
+:root {
+  /* ===== Color Palette ===== */
+  
+  /* Primary - Warm Blue-Purple Gradient */
+  --color-primary: #667eea;
+  --color-primary-light: #8b9aff;
+  --color-primary-dark: #5568d3;
+  --color-primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  
+  /* Secondary - Soft Teal */
+  --color-secondary: #56ccf2;
+  --color-secondary-light: #7ed9f7;
+  --color-secondary-dark: #3fb8de;
+  
+  /* Accent - Coral */
+  --color-accent: #ff6b6b;
+  --color-accent-light: #ff8787;
+  --color-accent-dark: #fa5252;
+  
+  /* Semantic Colors */
+  --color-success: #51cf66;
+  --color-success-light: #69db7c;
+  --color-success-dark: #40c057;
+  
+  --color-warning: #ffd43b;
+  --color-warning-light: #ffe066;
+  --color-warning-dark: #fcc419;
+  
+  --color-error: #ff6b6b;
+  --color-error-light: #ff8787;
+  --color-error-dark: #fa5252;
+  
+  --color-info: #56ccf2;
+  --color-info-light: #7ed9f7;
+  --color-info-dark: #3fb8de;
+  
+  /* Neutral Colors - Light Mode */
+  --color-bg-base: #ffffff;
+  --color-bg-elevated: #f8f9fa;
+  --color-bg-overlay: rgba(255, 255, 255, 0.95);
+  
+  --color-text-primary: #2d3436;
+  --color-text-secondary: #636e72;
+  --color-text-tertiary: #b2bec3;
+  
+  --color-border-light: #e9ecef;
+  --color-border-medium: #dee2e6;
+  --color-border-dark: #ced4da;
+  
+  /* ===== Spacing Scale (4px base) ===== */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  
+  /* ===== Border Radius ===== */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+  
+  /* ===== Shadows with Color Tint ===== */
+  --shadow-xs: 0 1px 2px rgba(102, 126, 234, 0.05);
+  --shadow-sm: 0 2px 4px rgba(102, 126, 234, 0.08);
+  --shadow-md: 0 4px 8px rgba(102, 126, 234, 0.12);
+  --shadow-lg: 0 8px 16px rgba(102, 126, 234, 0.15);
+  --shadow-xl: 0 12px 24px rgba(102, 126, 234, 0.18);
+  --shadow-2xl: 0 20px 40px rgba(102, 126, 234, 0.22);
+  
+  /* ===== Typography ===== */
+  --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+  --font-size-4xl: 36px;
+  
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+  
+  /* ===== Transitions ===== */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* ===== Z-Index Scale ===== */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+}
+
+/* Dark Mode Overrides */
+[data-theme="dark"],
+.dark {
+  --color-bg-base: #1a1d23;
+  --color-bg-elevated: #22262e;
+  --color-bg-overlay: rgba(26, 29, 35, 0.95);
+  
+  --color-text-primary: #e9ecef;
+  --color-text-secondary: #adb5bd;
+  --color-text-tertiary: #6c757d;
+  
+  --color-border-light: #343a40;
+  --color-border-medium: #495057;
+  --color-border-dark: #6c757d;
+  
+  /* Adjust shadows for dark mode */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.6);
+  --shadow-2xl: 0 20px 40px rgba(0, 0, 0, 0.7);
+}

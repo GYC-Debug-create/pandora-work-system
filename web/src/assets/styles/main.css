@@ -1,29 +1,77 @@
-/* 全局样式 */
+/* ============================================
+   Pandora System - Global Styles
+   Enhanced with Design Tokens
+   ============================================ */
+
+/* Apply design tokens to global elements */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   padding: 0;
-  font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--bg-color);
-  color: var(--text-color-primary);
+  background-color: var(--color-bg-base);
+  color: var(--color-text-primary);
+  transition: background-color var(--transition-base), color var(--transition-base);
 }
 
-/* 布局样式 */
+#app {
+  min-height: 100vh;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-elevated);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-dark);
+  border-radius: var(--radius-full);
+  transition: background var(--transition-fast);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-tertiary);
+}
+
+/* Layout Utilities */
 .app-container {
-  padding: 20px;
+  padding: var(--space-6);
 }
 
 .page-container {
-  background-color: var(--card-bg-color);
-  border-radius: 4px;
-  padding: 20px;
-  box-shadow: var(--header-shadow);
-  color: var(--text-color-primary);
+  background-color: var(--color-bg-elevated);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-md);
+  color: var(--color-text-primary);
+  transition: all var(--transition-base);
+}
+
+.page-container:hover {
+  box-shadow: var(--shadow-lg);
 }
 
 .page-header {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-6);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -31,28 +79,190 @@ body {
 
 .page-title {
   position: relative;
-  padding-left: 15px;
-  font-size: 18px;
-  font-weight: bold;
+  padding-left: var(--space-4);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
 }
 
-.page-title:before {
+.page-title::before {
   content: '';
   position: absolute;
   left: 0;
   top: 50%;
   transform: translateY(-50%);
   width: 4px;
-  height: 16px;
-  background: #409EFF;
-  border-radius: 2px;
+  height: 20px;
+  background: var(--color-primary-gradient);
+  border-radius: var(--radius-sm);
 }
 
 .filter-container {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-6);
 }
 
 .pagination-container {
-  margin-top: 20px;
+  margin-top: var(--space-6);
   text-align: right;
+}
+
+/* Element Plus Customizations */
+
+/* Override Element Plus primary color */
+:root {
+  --el-color-primary: var(--color-primary);
+  --el-color-primary-light-3: var(--color-primary-light);
+  --el-color-primary-light-5: rgba(102, 126, 234, 0.5);
+  --el-color-primary-light-7: rgba(102, 126, 234, 0.3);
+  --el-color-primary-light-8: rgba(102, 126, 234, 0.2);
+  --el-color-primary-light-9: rgba(102, 126, 234, 0.1);
+  --el-color-primary-dark-2: var(--color-primary-dark);
+
+  --el-color-success: var(--color-success);
+  --el-color-warning: var(--color-warning);
+  --el-color-danger: var(--color-error);
+  --el-color-info: var(--color-info);
+
+  --el-border-radius-base: var(--radius-md);
+  --el-border-radius-small: var(--radius-sm);
+  --el-border-radius-round: var(--radius-full);
+
+  --el-transition-duration: var(--transition-base);
+  --el-transition-duration-fast: var(--transition-fast);
+}
+
+/* Card Enhancements */
+.el-card {
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-base);
+  border: 1px solid var(--color-border-light);
+}
+
+.el-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+/* Button Enhancements */
+.el-button {
+  border-radius: var(--radius-md) !important;
+  font-weight: var(--font-weight-medium);
+  transition: all var(--transition-fast);
+}
+
+.el-button--primary {
+  background: var(--color-primary-gradient);
+  border: none;
+}
+
+.el-button--primary:hover,
+.el-button--primary:focus {
+  background: linear-gradient(135deg, #5568d3 0%, #5f3f89 100%);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.el-button--primary:active {
+  transform: translateY(0);
+}
+
+/* Input Enhancements */
+.el-input__wrapper {
+  border-radius: var(--radius-md) !important;
+  transition: all var(--transition-fast);
+}
+
+.el-input__wrapper:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+/* Table Enhancements */
+.el-table {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.el-table th {
+  background-color: var(--color-bg-elevated) !important;
+  font-weight: var(--font-weight-semibold);
+}
+
+.el-table tbody tr:hover>td {
+  background-color: rgba(102, 126, 234, 0.05) !important;
+}
+
+/* Modal Enhancements */
+.el-dialog {
+  border-radius: var(--radius-xl) !important;
+  box-shadow: var(--shadow-2xl);
+}
+
+.el-dialog__header {
+  padding: var(--space-6) !important;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.el-dialog__body {
+  padding: var(--space-6) !important;
+}
+
+/* Badge & Tag Enhancements */
+.el-tag {
+  border-radius: var(--radius-md) !important;
+}
+
+.el-badge__content {
+  border-radius: var(--radius-md) !important;
+}
+
+/* Animation Utilities */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn var(--transition-base);
+}
+
+.slide-up {
+  animation: slideUp var(--transition-base);
+}
+
+.slide-down {
+  animation: slideDown var(--transition-base);
 }
