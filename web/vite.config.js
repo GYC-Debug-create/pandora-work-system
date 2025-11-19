@@ -31,7 +31,7 @@ export default defineConfig({
     proxy: {
       // 配置代理，将API请求转发到后端服务
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'http://127.0.0.1:8080',
         changeOrigin: true,
         //rewrite: (path) => path.replace(/^\/api/, '')
       }

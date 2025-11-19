@@ -168,8 +168,8 @@ const handleSubmit = async () => {
 
     // 密码修改成功后，延迟1.5秒后自动退出登录
     setTimeout(() => {
-      localStorage.removeItem('admin-token')
-      localStorage.removeItem('user-info')
+      sessionStorage.removeItem('admin-token')
+      sessionStorage.removeItem('user-info')
       window.location.href = '/login'
     }, 1500)
   } catch (error) {
