@@ -25,7 +25,7 @@ const service = axios.create({
 // 请求拦截器
 service.interceptors.request.use(
   config => {
-    const token = localStorage.getItem('admin-token')
+    const token = sessionStorage.getItem('admin-token')
     if (token) {
       config.headers['Authorization'] = 'Bearer ' + token
     }
@@ -61,20 +61,6 @@ service.interceptors.response.use(
           if (logStoreAddLog) {
             logStoreAddLog('会话已过期，用户被强制登出', 'system')
           }
-
-          ElMessageBox.confirm('会话已过期或无效，请重新登录', '确认', {
-            confirmButtonText: '重新登录',
-            cancelButtonText: '取消',
-            type: 'warning'
-          }).then(() => {
-            localStorage.removeItem('admin-token')
-            localStorage.removeItem('user-info')
-            window.location.href = '/login'
-          }).catch(() => {
-            // 用户取消
-          })
-
-          return Promise.reject(new Error('会话无效'))
         }
       } else {
         // 其他错误显示消息
