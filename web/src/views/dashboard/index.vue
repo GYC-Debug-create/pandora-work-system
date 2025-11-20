@@ -354,6 +354,7 @@ import { ref, onMounted, computed } from 'vue'
 import { getUserList } from '@/api/user'
 import { useLogStore } from '@/store/log'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { showErrorMessage } from '@/utils/error'
 import {
   DataAnalysis,
   TrendCharts,
@@ -596,14 +597,28 @@ const handleExportJSON = () => {
   ElMessage.success('导出成功')
 }
 
-// 获取用户数据并进行统计
+// 获取用户数据并进行统计（防御性处理：兼容 Page 结构和直接数组）
 const fetchUserStats = async () => {
   try {
     const response = await getUserList({ pageNum: 1, pageSize: 100 })
-    // 后端返回的是 MyBatis-Plus 的 Page 对象：{ records: [...], total: xx }
-    const users = Array.isArray(response?.records) ? response.records : []
 
-    userStats.value.total = response?.total || users.length
+    // 兼容两种返回格式：
+    // 1. MyBatis-Plus Page: { records: [...], total: xx }
+    // 2. 直接数组: [...]
+    let users = []
+    let totalCount = 0
+
+    if (Array.isArray(response?.records)) {
+      // Page 结构
+      users = response.records
+      totalCount = response.total || users.length
+    } else if (Array.isArray(response)) {
+      // 直接数组
+      users = response
+      totalCount = users.length
+    }
+
+    userStats.value.total = totalCount
 
     const rolesCount = users.reduce((acc, user) => {
       acc[user.roleName] = (acc[user.roleName] || 0) + 1
@@ -616,6 +631,7 @@ const fetchUserStats = async () => {
     userStats.value.inactive = users.filter(user => user.status === USER_STATUS.INACTIVE).length
   } catch (error) {
     console.error("获取用户数据失败:", error)
+    showErrorMessage(error, '获取仪表盘统计数据失败')
     logStore.addLog('获取仪表盘统计数据失败', 'error')
   }
 }

@@ -57,7 +57,7 @@ const router = createRouter({
 
 // 导航守卫
 router.beforeEach((to, from, next) => {
-  const hasToken = localStorage.getItem('admin-token')
+  const hasToken = sessionStorage.getItem('admin-token')
 
   if (hasToken) {
     if (to.path === '/login') {

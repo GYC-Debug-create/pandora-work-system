@@ -117,15 +117,15 @@ const handleCommand = (command) => {
       type: 'warning',
     }).then(() => {
       // 获取用户信息
-      const userInfo = JSON.parse(localStorage.getItem('user-info') || '{}')
+      const userInfo = JSON.parse(sessionStorage.getItem('user-info') || '{}')
       const username = userInfo.username || '用户'
       
       // 记录登出日志
       logStore.addLog(`用户 ${username} 退出系统`, 'system')
       
       // 退出登录
-      localStorage.removeItem('admin-token')
-      localStorage.removeItem('user-info')
+      sessionStorage.removeItem('admin-token')
+      sessionStorage.removeItem('user-info')
       router.push('/login')
       ElMessage.success('已成功退出登录')
     }).catch(() => {
