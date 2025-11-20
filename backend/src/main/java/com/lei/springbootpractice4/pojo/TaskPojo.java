@@ -23,6 +23,7 @@ public class TaskPojo {
     private String status;
     private LocalDate startDate; // <--- 新增开始日期
     private LocalDate endDate;   // <--- 新增结束日期 (替代 dueDate)
+    private String taskAttachmentsJson;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

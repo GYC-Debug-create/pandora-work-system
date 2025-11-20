@@ -22,6 +22,7 @@ public class LogPojo {
     private Integer relatedSubTaskId; // 关联的子任务 ID
     private String activityType; // 活动类型 (枚举值)
     private String description; // 人类可读的描述
+    private String location; //
     private LocalDateTime createdAt; // 自动生成
 
     @TableField(exist = false)
@@ -34,12 +35,13 @@ public class LogPojo {
     private String relatedSubTaskName; // 关联的子任务名称
 
     // 方便调用的构造函数
-    public LogPojo(String userId, Integer relatedTaskId, Integer relatedSubTaskId, String activityType, String description) {
+    public LogPojo(String userId, Integer relatedTaskId, Integer relatedSubTaskId, String activityType, String location,String description) {
         this.userId = userId;
         this.relatedTaskId = relatedTaskId;
         this.relatedSubTaskId = relatedSubTaskId;
         this.activityType = activityType;
         this.description = description;
+        this.location = location;
         this.createdAt = LocalDateTime.now(); // 自动设置当前时间
     }
 }

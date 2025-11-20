@@ -8,9 +8,9 @@ import java.util.Map; // 引入 Map
 
 public interface TaskService {
 
-    TaskPojo createTask(TaskPojo task, String creatorId);
+    TaskPojo createTask(TaskPojo task, String creatorId, String location, String taskAttachmentsJson);
 
-    boolean addMembersToTask(Integer taskId, List<String> userIds, String currentUserId);
+    boolean addMembersToTask(Integer taskId, List<String> userIds, String currentUserId,String location);
 
     /**
      * 根据当前用户权限和筛选条件获取主任务列表 (分页)
@@ -35,5 +35,5 @@ public interface TaskService {
      * @param currentUser 当前登录的用户
      * @return 更新后的任务对象
      */
-    TaskPojo updateTask(Integer taskId, TaskPojo taskUpdateData, UsersPojo currentUser);
+    TaskPojo updateTask(Integer taskId, TaskPojo taskUpdateData, UsersPojo currentUser,String location);
 }

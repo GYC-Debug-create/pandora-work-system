@@ -13,6 +13,8 @@ import org.springframework.security.core.Authentication; // 用于获取当前�
 import org.springframework.security.core.context.SecurityContextHolder; // 用于获取当前用户信息
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 @RestController
@@ -26,6 +28,36 @@ public class SubTaskController {
     private JwtUtil jwtUtil;
     @Autowired
     private UserMapper userMapper; // <--- 注入 UserMapper
+
+
+
+    /**
+     * 从请求头中提取地理位置信息
+     */
+    private String getLocationFromRequest(HttpServletRequest request) {
+        String locationHeader = request.getHeader("X-Device-Location");
+
+        if (locationHeader == null || locationHeader.isBlank()) {
+            return null;
+        }
+
+        // 如果前端发送的是"未知位置"，我们存为 null
+        if ("未知位置".equals(locationHeader)) {
+            return null;
+        }
+
+        try {
+            // 关键：对从 Header 中获取的、可能被 URL 编码的字符串进行解码
+            return URLDecoder.decode(locationHeader, StandardCharsets.UTF_8.toString());
+        } catch (Exception e) {
+            // 如果解码失败（例如，它已经是未编码的普通 ASCII 字符串），
+            // 则打印一个警告，并尝试使用原始值
+            System.err.println("警告: URL 解码 X-Device-Location 失败。使用原始值: " + locationHeader);
+            return locationHeader;
+        }
+    }
+
+
 
     @GetMapping("/{subTaskId}")
     public ResponseEntity<Object> getSubTaskById(
@@ -65,6 +97,7 @@ public class SubTaskController {
         return null;
     }
 
+
     @PostMapping("/{subTaskId}/complete")
     public ResponseEntity<Object> completeSubTask(
             @PathVariable Integer subTaskId,
@@ -73,12 +106,13 @@ public class SubTaskController {
         try {
             // 1. 从 Token 获取当前用户 ID
             String currentUserId = getUserIdFromRequest(request);
+            String location = getLocationFromRequest(request);
             if (currentUserId == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "无法从Token获取用户信息"));
             }
 
             // 2. 调用 Service 将任务标记为完成
-            SubTaskPojo completedSubTask = subTaskService.completeSubTask(subTaskId, currentUserId);
+            SubTaskPojo completedSubTask = subTaskService.completeSubTask(subTaskId, currentUserId,location);
             return ResponseEntity.ok(completedSubTask);
 
         } catch (IllegalArgumentException e) { // 子任务不存在
@@ -103,6 +137,7 @@ public class SubTaskController {
         // 1. 从 payload 中获取审批结果和评论
         Boolean approved = (Boolean) payload.get("approved");
         String comment = (String) payload.get("comment");
+        String location = getLocationFromRequest(request);
 
         // 基本校验
         if (approved == null) {
@@ -120,7 +155,7 @@ public class SubTaskController {
             }
 
             // 3. 调用 Service 进行审批
-            SubTaskPojo reviewedSubTask = subTaskService.reviewSubTask(subTaskId, approved, comment, reviewerId);
+            SubTaskPojo reviewedSubTask = subTaskService.reviewSubTask(subTaskId, approved, comment, reviewerId, location);
             return ResponseEntity.ok(reviewedSubTask);
 
         } catch (IllegalArgumentException e) { // 子任务不存在 或 驳回无评论
@@ -147,12 +182,13 @@ public class SubTaskController {
         try {
             // --- 从 Token 获取 userId ---
             String currentUserId = getUserIdFromRequest(request);
+            String location = getLocationFromRequest(request);
             if (currentUserId == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "无法从Token获取用户信息"));
             }
             // --- 获取结束 ---
 
-            SubTaskPojo createdSubTask = subTaskService.createSubTask(subTask, currentUserId); // 传递 userId
+            SubTaskPojo createdSubTask = subTaskService.createSubTask(subTask, currentUserId,location); // 传递 userId
             return ResponseEntity.status(HttpStatus.CREATED).body(createdSubTask);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -174,6 +210,7 @@ public class SubTaskController {
             @PathVariable Integer subTaskId,
             @RequestBody Map<String, String> payload, HttpServletRequest request) { // 注入 request
 
+        String location = getLocationFromRequest(request);
         String deliverableContentJson = payload.get("deliverableContent");
         if (deliverableContentJson == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "请求体必须包含 deliverableContent 字段"));
@@ -187,7 +224,7 @@ public class SubTaskController {
             }
             // --- 获取结束 ---
 
-            SubTaskPojo updatedSubTask = subTaskService.submitDeliverable(subTaskId, deliverableContentJson, currentUserId); // 传递 userId
+            SubTaskPojo updatedSubTask = subTaskService.submitDeliverable(subTaskId, deliverableContentJson, currentUserId,location); // 传递 userId
             return ResponseEntity.ok(updatedSubTask);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
