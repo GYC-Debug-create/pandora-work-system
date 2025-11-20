@@ -38,7 +38,7 @@ public class SubTaskServiceImpl implements SubTaskService {
     // --- createSubTask 方法 (保持不变) ---
     @Override
     @Transactional
-    public SubTaskPojo createSubTask(SubTaskPojo subTask, String creatorId) {
+    public SubTaskPojo createSubTask(SubTaskPojo subTask, String creatorId, String location) {
         subTask.setCreatorId(creatorId);
         subTask.setStatus("TODO");
         subTask.setCreatedAt(LocalDateTime.now());
@@ -109,13 +109,16 @@ public class SubTaskServiceImpl implements SubTaskService {
 
         subTaskMapper.insert(subTask);
         fillNames(subTask);
+        UsersPojo creator = userMapper.selectById(creatorId);
+        String prefix = (subTask.getParentTaskId() != null || subTask.getParentSubTaskId() != null) ? "分解出" : "创建了";
+        logService.logSubTaskActivity(creator, subTask, "SUBTASK_CREATED", prefix, location); // <--- 传递 location
         return subTask;
     }
 
     // --- submitDeliverable 方法 (保持不变) ---
     @Override
     @Transactional
-    public SubTaskPojo submitDeliverable(Integer subTaskId, String deliverableContentJson, String currentUserId) {
+    public SubTaskPojo submitDeliverable(Integer subTaskId, String deliverableContentJson, String currentUserId,String location) {
         SubTaskPojo subTask = subTaskMapper.selectById(subTaskId);
         if (subTask == null) {
             throw new IllegalArgumentException("子任务不存在");
@@ -134,7 +137,7 @@ public class SubTaskServiceImpl implements SubTaskService {
         fillNames(subTask);
         //日志添加
         UsersPojo currentUser = userMapper.selectById(currentUserId);
-        logService.logSubTaskActivity(currentUser, subTask, "SUBTASK_SUBMITTED", "提交了");
+        logService.logSubTaskActivity(currentUser, subTask, "SUBTASK_SUBMITTED", "提交了", location);
 
         return subTask;
     }
@@ -142,7 +145,7 @@ public class SubTaskServiceImpl implements SubTaskService {
     // --- reviewSubTask 方法 (修改：调用递归检查) ---
     @Override
     @Transactional
-    public SubTaskPojo reviewSubTask(Integer subTaskId, boolean approved, String comment, String reviewerId) {
+    public SubTaskPojo reviewSubTask(Integer subTaskId, boolean approved, String comment, String reviewerId, String location) {
         SubTaskPojo subTask = subTaskMapper.selectById(subTaskId);
         if (subTask == null) {
             throw new IllegalArgumentException("子任务不存在");
@@ -181,14 +184,14 @@ public class SubTaskServiceImpl implements SubTaskService {
         subTask.setUpdatedAt(LocalDateTime.now());
         subTaskMapper.updateById(subTask);
 
-        logService.logSubTaskActivity(reviewer, subTask, activityType, descriptionPrefix);
-        logService.logSubTaskActivity(assignee, subTask, "SUBTASK_COMPLETED", "完成了");
+        logService.logSubTaskActivity(reviewer, subTask, activityType, descriptionPrefix,location);
+        logService.logSubTaskActivity(assignee, subTask, "SUBTASK_COMPLETED", "完成了",location);
         // --- 日志结束 ---
 
         // --- 修改：调用递归检查 ---
         if (approved) {
             // 检查是否需要自动完成父级（包括父子任务或主任务）
-            checkAndTriggerParentCompletion(subTask);
+            checkAndTriggerParentCompletion(subTask,location);
         }
         // --- 修改结束 ---
 
@@ -199,7 +202,7 @@ public class SubTaskServiceImpl implements SubTaskService {
     // --- completeSubTask 方法 (修改：调用递归检查) ---
     @Override
     @Transactional
-    public SubTaskPojo completeSubTask(Integer subTaskId, String currentUserId) {
+    public SubTaskPojo completeSubTask(Integer subTaskId, String currentUserId,String location) {
         SubTaskPojo subTask = subTaskMapper.selectById(subTaskId);
         if (subTask == null) {
             throw new IllegalArgumentException("子任务不存在");
@@ -222,11 +225,11 @@ public class SubTaskServiceImpl implements SubTaskService {
         subTaskMapper.updateById(subTask);
 
         UsersPojo currentUser = userMapper.selectById(currentUserId);
-        logService.logSubTaskActivity(currentUser, subTask, "SUBTASK_COMPLETED_MANUALLY", "将个人任务标记为");
+        logService.logSubTaskActivity(currentUser, subTask, "SUBTASK_COMPLETED_MANUALLY", "将个人任务标记为",location);
 
         // --- 修改：调用递归检查 ---
         // 个人任务没有父级，所以 checkAndTriggerParentCompletion(subTask) 会安全地不做任何事
-        checkAndTriggerParentCompletion(subTask);
+        checkAndTriggerParentCompletion(subTask,location);
         // --- 修改结束 ---
 
         fillNames(subTask);
@@ -301,7 +304,7 @@ public class SubTaskServiceImpl implements SubTaskService {
      * @param completedTask 刚刚被设置为 "COMPLETED" 状态的子任务
      */
     @Transactional
-    protected void checkAndTriggerParentCompletion(SubTaskPojo completedTask) {
+    protected void checkAndTriggerParentCompletion(SubTaskPojo completedTask,String location) {
 
         // 1. 检查父子任务 (Parent SubTask)
         if (completedTask.getParentSubTaskId() != null) {
@@ -329,11 +332,11 @@ public class SubTaskServiceImpl implements SubTaskService {
                     subTaskMapper.updateById(parentSubTask);
 
                     UsersPojo assignee = userMapper.selectById(parentSubTask.getAssignedToId());
-                    logService.logSubTaskActivity(assignee, parentSubTask, "SUBTASK_COMPLETED_AUTO", "（自动）完成了");
+                    logService.logSubTaskActivity(assignee, parentSubTask, "SUBTASK_COMPLETED_AUTO", "（自动）完成了",location);
 
                     // --- 递归调用 ---
                     // 检查这个刚刚完成的父子任务是否会触发它的父级完成
-                    checkAndTriggerParentCompletion(parentSubTask);
+                    checkAndTriggerParentCompletion(parentSubTask,location);
                 }
             }
 

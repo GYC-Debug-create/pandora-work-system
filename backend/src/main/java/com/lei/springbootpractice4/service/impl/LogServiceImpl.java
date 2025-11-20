@@ -48,7 +48,7 @@ public class LogServiceImpl implements LogService {
      */
     @Override
     @Transactional // 确保日志写入在独立事务中
-    public void logTaskActivity(UsersPojo user, TaskPojo task, String activityType, String descriptionSuffix) {
+    public void logTaskActivity(UsersPojo user, TaskPojo task, String activityType, String descriptionSuffix,String location) {
         try {
             String userName = getUserDisplayName(user);
             String taskName = task.getTaskName() != null ? "'" + task.getTaskName() + "'" : "";
@@ -60,6 +60,7 @@ public class LogServiceImpl implements LogService {
                     task.getTaskId(),
                     null, // 主任务活动，无子任务ID
                     activityType,
+                    location,
                     description
             );
             logMapper.insert(log);
@@ -73,7 +74,7 @@ public class LogServiceImpl implements LogService {
 
     @Override
     @Transactional
-    public void logSubTaskActivity(UsersPojo user, SubTaskPojo subTask, String activityType, String descriptionPrefix) {
+    public void logSubTaskActivity(UsersPojo user, SubTaskPojo subTask, String activityType, String descriptionPrefix,String location) {
         try {
             String userName = getUserDisplayName(user);
             String subTaskName = subTask.getSubTaskName() != null ? "'" + subTask.getSubTaskName() + "'" : "";
@@ -85,6 +86,7 @@ public class LogServiceImpl implements LogService {
                     subTask.getParentTaskId(), // 关联主任务ID
                     subTask.getSubTaskId(), // 关联子任务ID
                     activityType,
+                    location,
                     description
             );
             logMapper.insert(log);

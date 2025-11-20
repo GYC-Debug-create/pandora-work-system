@@ -34,14 +34,16 @@ public class TaskServiceImpl implements TaskService {
     @Autowired
     private LogService logService; // <--- 注入 LogService
 
+
     // --- createTask 和 addMembersToTask 方法保持不变 ---
     @Override
     @Transactional
-    public TaskPojo createTask(TaskPojo task, String creatorId) {
+    public TaskPojo createTask(TaskPojo task, String creatorId, String location,String taskAttachmentsJson) {
         // (代码同上一版本，确保已添加 fillTaskNames 调用)
         task.setCreatorId(creatorId);
         task.setCreatedAt(LocalDateTime.now());
         task.setUpdatedAt(LocalDateTime.now());
+        task.setTaskAttachmentsJson(taskAttachmentsJson);
         if ("TEAM".equals(task.getTaskType())) {
             if (task.getResponsiblePersonId() == null || task.getResponsiblePersonId().isBlank()) {
                 throw new IllegalArgumentException("团队任务必须指定负责人 (responsiblePersonId)");
@@ -65,13 +67,13 @@ public class TaskServiceImpl implements TaskService {
         taskMapper.insert(task);
         UsersPojo creator = userMapper.selectById(creatorId);
         fillTaskNames(task); // 填充名字
-        logService.logTaskActivity(creator, task, "TASK_CREATED", "创建了");
+        logService.logTaskActivity(creator, task, "TASK_CREATED", "创建了",location);
         return task;
     }
 
     @Override
     @Transactional
-    public boolean addMembersToTask(Integer taskId, List<String> userIds, String currentUserId) {
+    public boolean addMembersToTask(Integer taskId, List<String> userIds, String currentUserId, String location) {
 
         TaskPojo task = taskMapper.selectById(taskId);
         if (task == null) throw new IllegalArgumentException("任务不存在: ID " + taskId);
@@ -80,6 +82,11 @@ public class TaskServiceImpl implements TaskService {
         if (!Objects.equals(currentUserId, task.getResponsiblePersonId())) throw new SecurityException("只有任务负责人才能添加成员");
         if (userIds == null || userIds.isEmpty()) throw new IllegalArgumentException("成员列表 (userIds) 不能为空");
 
+        for (String userId : userIds) {
+            if (Objects.equals(userId, currentUserId)) {
+                throw new IllegalArgumentException("不能将自己添加为成员");
+            }
+        }
         LocalDateTime now = LocalDateTime.now();
         int insertedCount = 0; // 假设您计算了实际添加的数量
         for (String userId : userIds) {
@@ -100,7 +107,7 @@ public class TaskServiceImpl implements TaskService {
             UsersPojo currentUser = userMapper.selectById(currentUserId);
             // (可以优化：获取成员名字列表)
             String suffix = String.format("为任务添加了 %d 名成员", insertedCount);
-            logService.logTaskActivity(currentUser, task, "MEMBERS_ADDED", suffix);
+            logService.logTaskActivity(currentUser, task, "MEMBERS_ADDED", suffix, location);
         }
         return true;
     }
@@ -238,7 +245,7 @@ public class TaskServiceImpl implements TaskService {
     // --- 新增：更新任务信息 (带权限) ---
     @Override
     @Transactional
-    public TaskPojo updateTask(Integer taskId, TaskPojo taskUpdateData, UsersPojo currentUser) {
+    public TaskPojo updateTask(Integer taskId, TaskPojo taskUpdateData, UsersPojo currentUser, String location) {
         TaskPojo existingTask = taskMapper.selectById(taskId);
         if (existingTask == null) {
             throw new IllegalArgumentException("要更新的任务不存在: ID " + taskId);
@@ -276,7 +283,7 @@ public class TaskServiceImpl implements TaskService {
         }
 
         taskMapper.updateById(taskToUpdate); // updateById 会自动忽略 null 字段
-        logService.logTaskActivity(currentUser, existingTask, "TASK_UPDATED", "更新了");
+        logService.logTaskActivity(currentUser, existingTask, "TASK_UPDATED", "更新了", location);
 
         // 3. 返回更新后的完整数据
         return getTaskById(taskId, currentUser); // 调用详情接口获取最新数据
