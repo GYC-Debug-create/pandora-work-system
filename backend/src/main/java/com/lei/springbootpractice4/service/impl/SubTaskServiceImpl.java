@@ -252,20 +252,71 @@ public class SubTaskServiceImpl implements SubTaskService {
     }
 
     // --- 辅助方法 (保持不变) ---
+    /**
+     * 检查当前用户是否有权限查看指定的子任务
+     * @param subTask 需要检查的子任务对象
+     * @param currentUser 当前登录用户对象
+     * @return boolean 如果有权限返回true，否则返回false
+     */
     private boolean hasPermissionToViewSubTask(SubTaskPojo subTask, UsersPojo currentUser) {
-        // ... (代码保持不变) ...
+        // 参数校验：如果子任务或当前用户为空，直接返回无权限
         if (subTask == null || currentUser == null) return false;
+
+        // 1. 获取角色名和当前用户ID
+        // 确保您在 SubTaskServiceImpl 中注入了 RoleMapper
         RolePojo userRole = roleMapper.selectById(currentUser.getRoleId());
         String roleName = (userRole != null) ? userRole.getRoleName() : "EMPLOYEE";
         String currentUserId = currentUser.getUserId();
-        if ("ADMIN".equals(roleName) || "FOUNDER".equals(roleName)) return true;
-        if (Objects.equals(currentUserId, subTask.getAssignedToId())) return true;
-        if (Objects.equals(currentUserId, subTask.getCreatorId())) return true;
-        if (subTask.getParentTaskId() != null) {
-            TaskPojo parentTask = taskMapper.selectById(subTask.getParentTaskId());
-            if (parentTask != null && Objects.equals(currentUserId, parentTask.getResponsiblePersonId())) return true;
+
+        // 2. 权限校验
+
+        // a. 管理员/创始人 (最高权限)
+        // 检查用户角色是否为管理员或创始人，如果是则直接返回有权限
+        if ("ADMIN".equals(roleName) || "FOUNDER".equals(roleName)) {
+            return true;
         }
-        return false;
+
+        // b. 【新增规则】部门老总查看本部门成员的任务
+        // 检查用户是否为部门老总，并且检查子任务负责人是否在同一部门
+        if ("DEPARTMENT_HEAD".equals(roleName)) {
+            // 确保部门老总自己有部门ID
+            if (currentUser.getDepartmentId() != null) {
+                // 确保您在 SubTaskServiceImpl 中注入了 UserMapper
+                // 获取子任务负责人的完整信息（需要查询数据库）
+                UsersPojo assignee = userMapper.selectById(subTask.getAssignedToId());
+
+                // 检查：负责人存在 且 负责人有部门ID 且 两个部门ID相同
+                if (assignee != null &&
+                        assignee.getDepartmentId() != null &&
+                        Objects.equals(currentUser.getDepartmentId(), assignee.getDepartmentId())) {
+                    return true;
+                }
+            }
+        }
+
+        // c. 任务负责人 (Assignee)
+        // 检查当前用户是否为子任务的直接负责人
+        if (Objects.equals(currentUserId, subTask.getAssignedToId())) {
+            return true;
+        }
+
+        // d. 任务创建者 (Creator)
+        // 检查当前用户是否为子任务的创建者
+        if (Objects.equals(currentUserId, subTask.getCreatorId())) {
+            return true;
+        }
+
+        // e. 父主任务的负责人 (团队长)
+        // 检查当前用户是否为子任务所属父任务的负责人
+        if (subTask.getParentTaskId() != null) {
+            // 确保您在 SubTaskServiceImpl 中注入了 TaskMapper
+            TaskPojo parentTask = taskMapper.selectById(subTask.getParentTaskId());
+            if (parentTask != null && Objects.equals(currentUserId, parentTask.getResponsiblePersonId())) {
+                return true;
+            }
+        }
+
+        return false; // 默认无权限
     }
 
     private void loadDirectChildren(SubTaskPojo parentSubTask) {
