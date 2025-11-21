@@ -399,12 +399,16 @@ const selectedIndexes = ref(new Set()) // 使用 Set 存储选中的日志索引
 // 最近操作日志 - 直接从Pinia store中获取
 const activities = computed(() => logStore.logs)
 
-// 今日日志数量
+// 今日日志数量（使用数值时间戳，避免依赖本地化日期解析）
 const todayLogs = computed(() => {
-  const today = new Date().toISOString().split('T')[0]
+  const now = new Date()
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+  const endOfDay = startOfDay + 24 * 60 * 60 * 1000 - 1
+
   return activities.value.filter(log => {
-    const logDate = new Date(log.timestamp).toISOString().split('T')[0]
-    return logDate === today
+    const logTime = typeof log.time === 'number' ? log.time : Date.parse(log.timestamp)
+    if (Number.isNaN(logTime)) return false
+    return logTime >= startOfDay && logTime <= endOfDay
   }).length
 })
 
@@ -451,15 +455,21 @@ const filteredActivities = computed(() => {
     return result
   }
   
-  // 日期范围筛选
+  // 日期范围筛选（基于时间戳，避免依赖本地化日期解析）
   if (dateRange.value && dateRange.value.length === 2) {
     const [startDate, endDate] = dateRange.value
+
+    // dateRange 使用 value-format="YYYY-MM-DD"，构造标准 ISO 字符串再转时间戳
+    const startTime = new Date(`${startDate}T00:00:00`).getTime()
+    const endTime = new Date(`${endDate}T23:59:59.999`).getTime()
+
     result = result.filter(log => {
-      const logDate = new Date(log.timestamp).toISOString().split('T')[0]
-      return logDate >= startDate && logDate <= endDate
+      const logTime = typeof log.time === 'number' ? log.time : Date.parse(log.timestamp)
+      if (Number.isNaN(logTime)) return false
+      return logTime >= startTime && logTime <= endTime
     })
   }
-  
+
   // 类型筛选
   if (filterType.value) {
     result = result.filter(log => log.type === filterType.value)

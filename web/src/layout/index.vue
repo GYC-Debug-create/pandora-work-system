@@ -1,81 +1,88 @@
 <template>
-  <div class="layout-container">
-    <el-container>
-      <!-- 侧边栏 -->
-      <el-aside
-        width="220px"
-        class="sidebar-container"
-      >
-        <div class="logo-container">
-          <span class="logo-title">潘多拉系统</span>
-        </div>
-        <Sidebar />
-      </el-aside>
-
+  <div class="layout-root">
+    <div class="layout-container">
       <el-container>
-        <!-- 头部 -->
-        <el-header
-          height="60px"
-          class="header"
+        <!-- 侧边栏 -->
+        <el-aside
+          :width="isCollapse ? '64px' : '220px'"
+          class="sidebar-container"
         >
-          <div class="header-left">
-            <el-icon
-              class="hamburger"
-              @click="toggleSidebar"
+          <div class="logo-container">
+            <span
+              class="logo-title"
+              :class="{ 'logo-title-collapsed': isCollapse }"
             >
-              <Expand v-if="isCollapse" />
-              <Fold v-else />
-            </el-icon>
-            <Breadcrumb />
+              潘多拉系统
+            </span>
           </div>
-          <div class="header-right">
-            <!-- 主题切换按钮 -->
-            <el-tooltip
-              :content="isDark ? '切换到浅色模式' : '切换到暗色模式'"
-              placement="bottom"
-            >
+          <Sidebar :is-collapse="isCollapse" />
+        </el-aside>
+
+        <el-container>
+          <!-- 头部 -->
+          <el-header
+            height="60px"
+            class="header"
+          >
+            <div class="header-left">
               <el-icon
-                class="theme-toggle"
-                @click="toggleTheme"
+                class="hamburger"
+                @click="toggleSidebar"
               >
-                <Sunny v-if="isDark" />
-                <Moon v-else />
+                <Expand v-if="isCollapse" />
+                <Fold v-else />
               </el-icon>
-            </el-tooltip>
+              <Breadcrumb />
+            </div>
+            <div class="header-right">
+              <!-- 主题切换按钮 -->
+              <el-tooltip
+                :content="isDark ? '切换到浅色模式' : '切换到暗色模式'"
+                placement="bottom"
+              >
+                <el-icon
+                  class="theme-toggle"
+                  @click="toggleTheme"
+                >
+                  <Sunny v-if="isDark" />
+                  <Moon v-else />
+                </el-icon>
+              </el-tooltip>
 
-            <el-dropdown
-              trigger="click"
-              @command="handleCommand"
-            >
-              <div class="avatar-container">
-                <span>管理员</span>
-                <el-icon><CaretBottom /></el-icon>
-              </div>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item command="profile">
-                    个人中心
-                  </el-dropdown-item>
-                  <el-dropdown-item
-                    command="logout"
-                    divided
-                  >
-                    退出登录
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-          </div>
-        </el-header>
+              <el-dropdown
+                trigger="click"
+                @command="handleCommand"
+              >
+                <div class="avatar-container">
+                  <span>管理员</span>
+                  <el-icon><CaretBottom /></el-icon>
+                </div>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="profile">
+                      个人中心
+                    </el-dropdown-item>
+                    <el-dropdown-item
+                      command="logout"
+                      divided
+                    >
+                      退出登录
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
+          </el-header>
 
-        <!-- 主要内容区 -->
-        <el-main class="main-content">
-          <router-view />
-        </el-main>
+          <!-- 主要内容区 -->
+          <el-main class="main-content">
+            <router-view />
+          </el-main>
+        </el-container>
       </el-container>
-    </el-container>
+    </div>
+    <ProfileModal v-model:visible="profileModalVisible" />
   </div>
-  <ProfileModal v-model:visible="profileModalVisible" />
 </template>
 
 <script setup>
@@ -119,10 +126,10 @@ const handleCommand = (command) => {
       // 获取用户信息
       const userInfo = JSON.parse(sessionStorage.getItem('user-info') || '{}')
       const username = userInfo.username || '用户'
-      
+
       // 记录登出日志
       logStore.addLog(`用户 ${username} 退出系统`, 'system')
-      
+
       // 退出登录
       sessionStorage.removeItem('admin-token')
       sessionStorage.removeItem('user-info')
@@ -143,10 +150,26 @@ const handleCommand = (command) => {
 }
 
 .sidebar-container {
-  background-color: var(--sidebar-bg-color);
   height: 100vh;
-  transition: width 0.28s, background-color 0.3s ease;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(241, 245, 255, 0.98)),
+    var(--gradient-surface-primary);
+  border-right: 1px solid var(--glass-stroke-soft);
+  box-shadow: var(--glass-shadow-weak);
+  backdrop-filter: blur(var(--glass-blur-md));
+  -webkit-backdrop-filter: blur(var(--glass-blur-md));
+  transition:
+    width 0.28s,
+    background-color 0.3s ease,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
   overflow-x: hidden;
+}
+
+.dark .sidebar-container {
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.9)),
+    var(--gradient-surface-primary);
 }
 
 .logo-container {
@@ -154,24 +177,45 @@ const handleCommand = (command) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--sidebar-logo-bg-color);
-  transition: background-color 0.3s ease;
+  background: radial-gradient(circle at top, rgba(255, 255, 255, 0.12), transparent 60%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .logo-title {
   color: #fff;
   font-size: 18px;
   font-weight: bold;
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+  transition:
+    font-size 0.2s ease,
+    letter-spacing 0.2s ease;
 }
 
+.logo-title-collapsed {
+  font-size: 14px;
+  letter-spacing: 2px;
+  white-space: nowrap;
+}
+
+
 .header {
-  background-color: var(--header-bg-color);
-  box-shadow: var(--header-shadow);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  background: var(--glass-bg-soft);
+  box-shadow: var(--glass-shadow-weak);
+  backdrop-filter: blur(var(--glass-blur-sm));
+  -webkit-backdrop-filter: blur(var(--glass-blur-sm));
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  border-bottom: 1px solid var(--glass-stroke-muted);
+  transition:
+    background-color var(--transition-base),
+    box-shadow var(--transition-base),
+    border-color var(--transition-base);
   color: var(--text-color-primary);
 }
 
@@ -195,29 +239,54 @@ const handleCommand = (command) => {
 .theme-toggle {
   font-size: 20px;
   cursor: pointer;
-  transition: color 0.3s ease, transform 0.3s ease;
+  transition:
+    color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .theme-toggle:hover {
-  color: #409EFF;
-  transform: scale(1.1);
+  color: var(--color-primary);
+  transform: scale(1.06) translateY(-1px);
 }
 
 .avatar-container {
   display: flex;
   align-items: center;
   cursor: pointer;
+  padding: 6px 10px;
+  border-radius: var(--radius-full);
+  background-color: rgba(15, 23, 42, 0.02);
+  transition:
+    background-color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .avatar-container span {
   margin-right: 5px;
 }
 
+.avatar-container:hover {
+  background-color: rgba(15, 23, 42, 0.05);
+  transform: translateY(-1px);
+}
+
 .main-content {
   padding: 20px;
-  background-color: var(--main-bg-color);
+  background-color: transparent;
   height: calc(100vh - 60px);
   overflow-y: auto;
-  transition: background-color 0.3s ease;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  transition:
+    background-color var(--transition-base),
+    backdrop-filter var(--transition-base);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-toggle,
+  .avatar-container {
+    transition: color 0.2s ease, background-color 0.2s ease;
+    transform: none !important;
+  }
 }
 </style>

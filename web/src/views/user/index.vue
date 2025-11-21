@@ -553,10 +553,29 @@ const userStats = computed(() => {
 })
 
 // Validation Rules
+const validateUsernameUnique = (rule, value, callback) => {
+  const normalized = (value || '').trim()
+  const isEdit = userForm.value.userId !== undefined
+  if (!normalized) {
+    return callback()
+  }
+  const hasDuplicate = userList.value.some((user) => {
+    if (!user.username) return false
+    const sameName = user.username.trim() === normalized
+    const isSelf = isEdit && user.userId === userForm.value.userId
+    return sameName && !isSelf
+  })
+  if (hasDuplicate) {
+    callback(new Error('已存在同名用户名'))
+  } else {
+    callback()
+  }
+}
 const rules = {
   username: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
+    { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' },
+    { validator: validateUsernameUnique, trigger: ['blur', 'change'] }
   ],
   password: [
     { required: true, message: '请输入初始密码', trigger: 'blur' },
@@ -747,55 +766,78 @@ const handleDelete = (row) => {
 // 提交表单 (创建或更新)
 const submitForm = () => {
   userFormRef.value.validate((valid) => {
-    if (valid) {
-      const isEdit = userForm.value.userId !== undefined;
-
-      // 准备发送给后端的数据
-      const dataToSend = {
-        username: userForm.value.username,
-        fullName: userForm.value.fullName,
-        email: userForm.value.email,
-        mbtiType: userForm.value.mbtiType,
-        departmentId: userForm.value.departmentId,
-        roleId: userForm.value.roleId,
-        status: userForm.value.status
-      };
-
-      let apiCall;
-      let actionLog;
-      let successMsg;
-
-      if (isEdit) {
-        apiCall = updateUser(userForm.value.userId, dataToSend);
-        actionLog = `更新了用户 "${dataToSend.username}" (ID: ${userForm.value.userId}) 的信息`;
-        successMsg = '更新成功!';
-      } else {
-        if (!userForm.value.password) {
-          ElMessage.error('新增用户时必须提供初始密码');
-          return;
-        }
-        // 内部用 password，发送时映射为 passwordHash
-        dataToSend.passwordHash = userForm.value.password;
-        apiCall = createUser(dataToSend);
-        actionLog = `创建了新用户 "${dataToSend.username}"`;
-        successMsg = '添加成功!';
-      }
-
-      apiCall.then(() => {
-        getList();
-        ElMessage({ type: 'success', message: successMsg });
-        logStore.addLog(actionLog);
-        dialogVisible.value = false;
-      }).catch((error) => {
-        const action = isEdit ? '更新' : '创建';
-        showErrorMessage(error, `${action}用户失败`)
-        logStore.addLog(`${action}用户 "${dataToSend.username}" 失败`, 'error');
-      });
-
-    } else {
+    if (!valid) {
       console.log('表单校验失败');
       return false;
     }
+
+    const isEdit = userForm.value.userId !== undefined;
+
+    // 统一对用户名做一次前端唯一性校验：
+    // - 只校验当前已加载在 userList 里的数据
+    // - 编辑场景下排除当前这条记录本身
+    const normalizedUsername = (userForm.value.username || '').trim();
+    if (!normalizedUsername) {
+      ElMessage.error('请输入用户名');
+      return;
+    }
+
+    const hasDuplicate = userList.value.some((user) => {
+      if (!user.username) return false;
+      const sameName = user.username.trim() === normalizedUsername;
+      const isSameRecord = isEdit && user.userId === userForm.value.userId;
+      return sameName && !isSameRecord;
+    });
+
+    if (hasDuplicate) {
+      ElMessage.warning({
+        message: '已存在同名用户名，请修改后再保存',
+        duration: 3000,
+      });
+      return;
+    }
+
+    // 准备发送给后端的数据
+    const dataToSend = {
+      username: normalizedUsername,
+      fullName: userForm.value.fullName,
+      email: userForm.value.email,
+      mbtiType: userForm.value.mbtiType,
+      departmentId: userForm.value.departmentId,
+      roleId: userForm.value.roleId,
+      status: userForm.value.status,
+    };
+
+    let apiCall;
+    let actionLog;
+    let successMsg;
+
+    if (isEdit) {
+      apiCall = updateUser(userForm.value.userId, dataToSend);
+      actionLog = `更新了用户 "${dataToSend.username}" (ID: ${userForm.value.userId}) 的信息`;
+      successMsg = '更新成功!';
+    } else {
+      if (!userForm.value.password) {
+        ElMessage.error('新增用户时必须提供初始密码');
+        return;
+      }
+      // 内部用 password，发送时映射为 passwordHash
+      dataToSend.passwordHash = userForm.value.password;
+      apiCall = createUser(dataToSend);
+      actionLog = `创建了新用户 "${dataToSend.username}"`;
+      successMsg = '添加成功!';
+    }
+
+    apiCall.then(() => {
+      getList();
+      ElMessage({ type: 'success', message: successMsg });
+      logStore.addLog(actionLog);
+      dialogVisible.value = false;
+    }).catch((error) => {
+      const action = isEdit ? '更新' : '创建';
+      showErrorMessage(error, `${action}用户失败`);
+      logStore.addLog(`${action}用户 "${dataToSend.username}" 失败`, 'error');
+    });
   });
 };
 

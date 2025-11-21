@@ -22,6 +22,7 @@ import { useLogStore } from './store/log'
 
 import './assets/styles/main.css'
 import './assets/styles/theme.css'
+import './styles/element-overrides.css'
 
 // 导入所有 Element Plus 图标
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
