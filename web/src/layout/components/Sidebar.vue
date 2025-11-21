@@ -25,6 +25,13 @@ import { useRoute } from 'vue-router'
 import SidebarItem from './SidebarItem.vue'
 import router from '@/router'
 
+const props = defineProps({
+  isCollapse: {
+    type: Boolean,
+    default: false
+  }
+})
+
 // 获取路由实例
 const route = useRoute()
 
@@ -44,6 +51,6 @@ const activeMenu = computed(() => {
 
 // 是否折叠菜单
 const isCollapse = computed(() => {
-  return false // 这里可以从全局状态管理中获取
+  return props.isCollapse
 })
 </script>

@@ -1,7 +1,16 @@
 <template>
-  <el-config-provider :locale="zhCn">
-    <router-view />
-  </el-config-provider>
+  <div class="app-shell">
+    <el-config-provider :locale="zhCn">
+      <router-view v-slot="{ Component }">
+        <transition
+          name="route-fade-slide"
+          mode="out-in"
+        >
+          <component :is="Component" />
+        </transition>
+      </router-view>
+    </el-config-provider>
+  </div>
 </template>
 
 <script setup>
@@ -41,5 +50,29 @@ watch(
 #app {
   height: 100vh;
   width: 100vw;
+}
+
+.app-shell {
+  min-height: 100vh;
+  width: 100vw;
+  background:
+    radial-gradient(circle at top left, rgba(102, 126, 234, 0.12), transparent 55%),
+    radial-gradient(circle at bottom right, rgba(86, 204, 242, 0.1), transparent 55%),
+    linear-gradient(145deg, var(--color-bg-base), var(--color-bg-elevated));
+  display: flex;
+  flex-direction: column;
+}
+
+.route-fade-slide-enter-active,
+.route-fade-slide-leave-active {
+  transition:
+    opacity var(--transition-base),
+    transform var(--transition-base);
+}
+
+.route-fade-slide-enter-from,
+.route-fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
 }
 </style>

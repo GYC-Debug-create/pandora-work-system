@@ -205,8 +205,29 @@ const initialForm = {
 const taskForm = ref({ ...initialForm })
 
 // 表单校验规则
+const validateTaskTitleUnique = (rule, value, callback) => {
+  const normalized = (value || '').trim()
+  if (!normalized) {
+    return callback()
+  }
+  const hasDuplicate = taskList.value.some((item) => {
+    if (!item.title) return false
+    const sameTitle = item.title.trim() === normalized
+    const isSelf = taskForm.value.matterId != null && item.id === taskForm.value.matterId
+    return sameTitle && !isSelf
+  })
+  if (hasDuplicate) {
+    callback(new Error('已存在同名事项标题'))
+  } else {
+    callback()
+  }
+}
+
 const taskRules = {
-  title: [{ required: true, message: '请输入事项标题', trigger: 'blur' }],
+  title: [
+    { required: true, message: '请输入事项标题', trigger: 'blur' },
+    { validator: validateTaskTitleUnique, trigger: ['blur', 'change'] }
+  ],
   content: [{ required: true, message: '请输入详细内容', trigger: 'blur' }]
 }
 
@@ -305,6 +326,27 @@ const submitForm = () => {
       title: taskForm.value.title,
       content: taskForm.value.content
     }
+
+    // 统一做一次前端标题唯一性校验：
+    // - 同一列表中不允许存在两个完全相同的标题
+    // - 编辑场景下排除当前这条记录本身
+    const normalizedTitle = (dataToSend.title || '').trim()
+    const hasDuplicate = taskList.value.some(item => {
+      if (!item.title) return false
+      const sameTitle = item.title.trim() === normalizedTitle
+      const isSameRecord = dataToSend.matterId != null && item.id === dataToSend.matterId
+      return sameTitle && !isSameRecord
+    })
+
+    if (hasDuplicate) {
+      ElMessage.warning({
+        message: '已存在同名事项，请修改标题以保持唯一',
+        duration: 3000
+      })
+      return
+    }
+
+    dataToSend.title = normalizedTitle
 
     const isEdit = dataToSend.matterId !== null
     const apiCall = isEdit

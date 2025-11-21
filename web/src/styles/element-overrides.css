@@ -1,0 +1,139 @@
+/* ============================================
+   Pandora System - Element Plus Glassmorphism Overrides
+   Conservative glass surfaces + micro-interactions
+   ============================================ */
+
+/* Dialog & overlay glass background */
+.el-overlay {
+  background:
+    radial-gradient(circle at top left, rgba(102, 126, 234, 0.20), transparent 55%),
+    radial-gradient(circle at bottom right, rgba(86, 204, 242, 0.18), transparent 55%),
+    rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(var(--glass-blur-sm));
+  -webkit-backdrop-filter: blur(var(--glass-blur-sm));
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .el-overlay {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* Dialog body as premium glass surface */
+.el-dialog,
+.el-message-box {
+  background: var(--glass-bg-soft);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--glass-stroke-muted);
+  box-shadow: var(--glass-shadow-soft);
+  backdrop-filter: blur(var(--glass-blur-md));
+  -webkit-backdrop-filter: blur(var(--glass-blur-md));
+  overflow: hidden;
+}
+
+.el-dialog__header,
+.el-message-box__header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Cards as soft glass panels */
+.el-card {
+  background: var(--glass-bg-soft);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-stroke-muted);
+  box-shadow: var(--glass-shadow-weak);
+  backdrop-filter: blur(var(--glass-blur-sm));
+  -webkit-backdrop-filter: blur(var(--glass-blur-sm));
+  transition:
+    background-color var(--transition-base),
+    box-shadow var(--transition-base),
+    transform var(--transition-fast),
+    border-color var(--transition-base);
+}
+
+.el-card:hover {
+  box-shadow: var(--glass-shadow-soft);
+  transform: translateY(-2px);
+}
+
+/* Inputs: soft glass fields */
+.el-input__wrapper {
+  background-color: rgba(255, 255, 255, 0.86);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow-xs);
+  backdrop-filter: blur(var(--glass-blur-sm));
+  -webkit-backdrop-filter: blur(var(--glass-blur-sm));
+  transition:
+    background-color var(--transition-base),
+    box-shadow var(--transition-base),
+    border-color var(--transition-base),
+    transform var(--transition-fast);
+}
+
+.el-input__wrapper:hover {
+  border-color: var(--color-primary-light);
+  box-shadow: var(--shadow-sm);
+}
+
+.el-input__wrapper.is-focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.25);
+  transform: translateY(-1px);
+}
+
+/* Primary buttons: subtle lift + press */
+.el-button--primary {
+  background-image: var(--color-primary-gradient);
+  border: none;
+  box-shadow: var(--shadow-sm);
+  transition:
+    background-image var(--transition-base),
+    box-shadow var(--transition-base),
+    transform var(--transition-fast);
+}
+
+.el-button--primary:hover,
+.el-button--primary:focus {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.el-button--primary:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: var(--shadow-xs);
+}
+
+/* Dropdowns & popovers: floating glass */
+.el-select-dropdown,
+.el-dropdown-menu,
+.el-popper {
+  background: var(--glass-bg-soft);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-stroke-soft);
+  box-shadow: var(--glass-shadow-weak);
+  backdrop-filter: blur(var(--glass-blur-md));
+  -webkit-backdrop-filter: blur(var(--glass-blur-md));
+}
+
+/* Menus: transparent with active glow */
+.el-menu {
+  background-color: transparent;
+}
+
+.el-menu-item.is-active,
+.el-sub-menu__title.is-active {
+  background: rgba(102, 126, 234, 0.18) !important;
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .el-card,
+  .el-input__wrapper,
+  .el-button--primary {
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    transform: none !important;
+  }
+}
+

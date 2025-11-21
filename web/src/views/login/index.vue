@@ -285,11 +285,12 @@ onUnmounted(() => {
   width: 420px;
   border-radius: var(--radius-xl) !important;
   z-index: 1;
-  background: v-bind("isDark ? 'rgba(26, 29, 35, 0.8)' : 'rgba(255, 255, 255, 0.95)'");
-  backdrop-filter: blur(20px);
-  box-shadow: var(--shadow-2xl);
-  border: 1px solid v-bind("isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(102, 126, 234, 0.1)'");
-  animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  background: v-bind("isDark ? 'var(--glass-bg-strong)' : 'var(--glass-bg-soft)'");
+  backdrop-filter: blur(var(--glass-blur-lg));
+  -webkit-backdrop-filter: blur(var(--glass-blur-lg));
+  box-shadow: var(--glass-shadow-soft);
+  border: 1px solid v-bind("isDark ? 'var(--glass-stroke-soft)' : 'var(--glass-stroke-muted)'");
+  animation: slideUp 0.5s var(--transition-spring-subtle);
   overflow: hidden;
   position: relative;
 }

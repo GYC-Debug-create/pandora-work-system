@@ -11,6 +11,7 @@ const REQUEST_TIMEOUT = 10000
 
 // 用于存储日志函数的引用（避免循环依赖）
 let logStoreAddLog = null
+let isHandlingUnauthorized = false
 
 // 导出设置日志函数的方法
 export const setLogStore = (addLogFn) => {
@@ -57,10 +58,31 @@ service.interceptors.response.use(
           // 登录失败：直接返回错误，由登录页面处理
           return Promise.reject(error)
         } else {
-          // 真正的会话过期：记录日志并强制登出
+          // 真正的会话过期：统一强制登出并回到登录页
+          if (isHandlingUnauthorized) {
+            // 已在处理 401，避免弹出多个对话框
+            return Promise.reject(error)
+          }
+          isHandlingUnauthorized = true
+
           if (logStoreAddLog) {
             logStoreAddLog('会话已过期，用户被强制登出', 'system')
           }
+
+          // 清理本地会话信息
+          sessionStorage.removeItem('admin-token')
+          sessionStorage.removeItem('user-info')
+
+          // 友好提示 + 重定向到登录页
+          ElMessageBox.alert('会话已过期，请重新登录', '提示', {
+            type: 'warning',
+            confirmButtonText: '重新登录'
+          }).finally(() => {
+            isHandlingUnauthorized = false
+            window.location.href = '/login'
+          })
+
+          return Promise.reject(error)
         }
       } else {
         // 其他错误显示消息
