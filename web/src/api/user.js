@@ -8,7 +8,7 @@ import request from '@/utils/request' // 引入配置好的 Axios 实例
  */
 export function login(data) {
   return request({
-    url: '/api/user/login',
+    url: '/api/user/web-login',
     method: 'post',
     data
   })
