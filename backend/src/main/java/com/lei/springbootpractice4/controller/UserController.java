@@ -92,6 +92,36 @@ public class UserController { // 移除类级别的 RequestMapping 或修改
             return ResponseEntity.status(401).body("登录失败,用户名或密码错误");
         }
     }
+
+    // POST /api/user/web-login (Web端专用登录，仅限ADMIN)
+    @PostMapping("/api/user/web-login")
+    public ResponseEntity<Object> webLogin(@RequestBody UsersPojo user) {
+        UsersPojo loginUser = userService.login(user.getUsername(), user.getPasswordHash());
+        if (loginUser != null) {
+            // Web端仅允许ADMIN登录
+            if (loginUser.getRoleId() == null || loginUser.getRoleId() != 1) {
+                return ResponseEntity.status(403).body("Web端仅限管理员登录");
+            }
+
+            loginUser.setPasswordHash(null);
+            final UserDetails userDetails = new User(loginUser.getUsername(), "", new ArrayList<>());
+            Map<String, Object> claims = new HashMap<>();
+            claims.put("userId", loginUser.getUserId());
+            RolePojo role = roleMapper.selectById(loginUser.getRoleId());
+            if (role != null) {
+                claims.put("role", role.getRoleName());
+            }
+            final String token = jwtUtil.generateToken(claims, userDetails.getUsername());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("token", token);
+            response.put("user", loginUser);
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.status(401).body("登录失败,用户名或密码错误");
+        }
+    }
+
     // --- 新增API端点 ---
 
     /**
