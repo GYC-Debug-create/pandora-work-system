@@ -40,4 +40,10 @@ public interface UserService {
     boolean changePassword(String userId, String oldPassword, String newPassword); // <--- 新增 location
     boolean changeMbti(String userId, String newMbti); // <--- 新增 location
     boolean changeUsername(String userId, String newUsername); // <--- 新增 location
+    /**
+     * 获取用户的 MBTI 类型
+     * @param userId 用户ID
+     * @return MBTI 字符串 (如 "INTJ")，如果未设置则返回 null
+     */
+    String getUserMbti(String userId);
 }
