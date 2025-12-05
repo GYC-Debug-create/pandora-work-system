@@ -127,7 +127,10 @@ public class SubTaskServiceImpl implements SubTaskService {
             throw new SecurityException("只有子任务的负责人才能提交交付物");
         }
         String currentStatus = subTask.getStatus();
-        if (!("TODO".equals(currentStatus) || "IN_PROGRESS".equals(currentStatus) || "REJECTED".equals(currentStatus))) {
+        if (!("TODO".equals(currentStatus) ||
+                "IN_PROGRESS".equals(currentStatus) ||
+                "REJECTED".equals(currentStatus) ||
+                "OVERDUE".equals(currentStatus))) { // <--- 新增允许 OVERDUE
             throw new IllegalStateException("当前任务状态 (" + currentStatus + ") 不允许提交交付物");
         }
         subTask.setDeliverableContent(deliverableContentJson);
@@ -422,5 +425,51 @@ public class SubTaskServiceImpl implements SubTaskService {
             // 个人任务没有父级，递归结束
             return;
         }
+
+    }
+    @Override
+    public List<SubTaskPojo> getTop10CompanyAssignedSubTasks(String currentUserId) {
+        QueryWrapper<SubTaskPojo> queryWrapper = new QueryWrapper<>();
+        queryWrapper
+                .eq("assigned_to_id", currentUserId) // 负责人是自己
+                .ne("creator_id", currentUserId)     // 创建人不是自己 (公司/上级派发)
+                // 排除已结束的状态
+                .ne("status", "COMPLETED")
+                .ne("status", "CANCELLED")
+                .ne("status", "REJECTED") // 根据需求，被驳回的可能也算待处理，看您业务。这里暂时排除，只看进行中/待办
+                // 排除已逾期的
+                .ne("status", "OVERDUE")
+                // 确保时间未过 (双重保险，可选)
+                .gt("end_time", LocalDateTime.now())
+
+                .orderByDesc("created_at") // 最新的
+                .last("LIMIT 10"); // 前10条
+
+        List<SubTaskPojo> tasks = subTaskMapper.selectList(queryWrapper);
+        tasks.forEach(this::fillNames); // 填充名字信息
+        return tasks;
+    }
+
+    @Override
+    public List<SubTaskPojo> getTop10PersonalCreatedSubTasks(String currentUserId) {
+        QueryWrapper<SubTaskPojo> queryWrapper = new QueryWrapper<>();
+        queryWrapper
+                .eq("creator_id", currentUserId)     // 创建人是自己 (个人事项)
+                // .eq("assigned_to_id", currentUserId) // 通常个人事项也是分给自己，可以加上这句更严谨
+
+                // 排除已结束的状态
+                .ne("status", "COMPLETED")
+                .ne("status", "CANCELLED")
+                // 排除已逾期的
+                .ne("status", "OVERDUE")
+                // 确保时间未过 (双重保险，可选)
+                .gt("end_time", LocalDateTime.now())
+
+                .orderByDesc("created_at") // 最新的
+                .last("LIMIT 10"); // 前10条
+
+        List<SubTaskPojo> tasks = subTaskMapper.selectList(queryWrapper);
+        tasks.forEach(this::fillNames); // 填充名字信息
+        return tasks;
     }
 }

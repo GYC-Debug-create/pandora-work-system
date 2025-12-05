@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -263,4 +264,40 @@ public class SubTaskController {
     // --- 后续可以添加获取子任务详情接口 GET /api/subtasks/{subTaskId} ---
     // @GetMapping("/{subTaskId}")
     // public ResponseEntity<SubTaskPojo> getSubTaskById(...) { ... }
+    @GetMapping("/company-assigned/top10")
+    public ResponseEntity<Object> getTop10CompanyAssignedTasks(HttpServletRequest request) {
+        try {
+            String currentUserId = getUserIdFromRequest(request);
+            if (currentUserId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "无法从Token获取用户信息"));
+            }
+
+            List<SubTaskPojo> tasks = subTaskService.getTop10CompanyAssignedSubTasks(currentUserId);
+            return ResponseEntity.ok(tasks);
+
+        } catch (Exception e) {
+            System.err.println("获取公司派发任务失败: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "获取数据失败"));
+        }
+    }
+
+    // --- 新增接口：获取个人十大重要事项 (自建) ---
+    @GetMapping("/personal/top10")
+    public ResponseEntity<Object> getTop10PersonalTasks(HttpServletRequest request) {
+        try {
+            String currentUserId = getUserIdFromRequest(request);
+            if (currentUserId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "无法从Token获取用户信息"));
+            }
+
+            List<SubTaskPojo> tasks = subTaskService.getTop10PersonalCreatedSubTasks(currentUserId);
+            return ResponseEntity.ok(tasks);
+
+        } catch (Exception e) {
+            System.err.println("获取个人重要事项失败: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "获取数据失败"));
+        }
+    }
 }

@@ -257,4 +257,12 @@ public class UserServiceImpl implements UserService {
 
         return userMapper.updateById(userToUpdate) > 0;
     }
+    @Override
+    public String getUserMbti(String userId) {
+        UsersPojo user = userMapper.selectById(userId);
+        if (user != null) {
+            return user.getMbtiType();
+        }
+        return null;
+    }
 }

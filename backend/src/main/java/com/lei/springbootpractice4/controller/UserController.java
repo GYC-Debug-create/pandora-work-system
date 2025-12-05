@@ -272,4 +272,23 @@ public class UserController { // 移除类级别的 RequestMapping 或修改
         }
         return currentUserId;
     }
+    @GetMapping("/api/user/mbti")
+    public ResponseEntity<Object> getUserMbti(HttpServletRequest request) {
+        try {
+            String currentUserId = getUserIdFromRequest(request);
+            if (currentUserId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "无效的用户凭证"));
+            }
+
+            String mbti = userService.getUserMbti(currentUserId);
+
+            // 返回 JSON 格式: { "mbti": "INTJ" }
+            return ResponseEntity.ok(Map.of("mbti", mbti != null ? mbti : ""));
+
+        } catch (Exception e) {
+            System.err.println("获取 MBTI 失败: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "获取 MBTI 失败"));
+        }
+    }
 }

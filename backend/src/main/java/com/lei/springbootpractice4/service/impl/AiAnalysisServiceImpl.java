@@ -1,3 +1,4 @@
+// 文件路径: backend/src/main/java/com/lei/springbootpractice4/service/impl/AiAnalysisServiceImpl.java
 package com.lei.springbootpractice4.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -32,57 +33,40 @@ public class AiAnalysisServiceImpl implements AiAnalysisService {
     @Override
     public Map<String, Object> getAiAnalysisData(String targetUserId, UsersPojo currentUser) {
 
-        // 1. 权限校验
-        RolePojo role = roleMapper.selectById(currentUser.getRoleId());
-        String roleName = (role != null) ? role.getRoleName() : "EMPLOYEE";
-
-        // 既不是本人，也不是 ADMIN 或 FOUNDER
-        if (!Objects.equals(currentUser.getUserId(), targetUserId) &&
-                !"ADMIN".equals(roleName) &&
-                !"FOUNDER".equals(roleName)) {
-
-            throw new SecurityException("无权访问该用户的 AI 分析数据");
-        }
-
-        // 2. 获取目标用户信息
+        // 1. 获取目标用户信息 (提前获取，用于权限判断)
         UsersPojo targetUser = userMapper.selectById(targetUserId);
         if (targetUser == null) {
             throw new IllegalArgumentException("目标用户不存在: ID " + targetUserId);
         }
 
+        // 2. 权限校验 (核心修改部分)
+        checkPermission(currentUser, targetUser);
+
         // 3. 获取最近12条子任务 (按 created_at 降序)
+        // (保持不变：获取被分配的任务)
         QueryWrapper<SubTaskPojo> subTaskQuery = new QueryWrapper<>();
-        subTaskQuery.eq("assigned_to_id", targetUserId); // 分配给该用户的
+        subTaskQuery.eq("assigned_to_id", targetUserId);
         subTaskQuery.orderByDesc("created_at");
-        subTaskQuery.last("LIMIT 12"); // 获取最近12条
+        subTaskQuery.last("LIMIT 12"); // 仍保持只获取最近12条给AI分析
 
         List<SubTaskPojo> recentSubTasks = subTaskMapper.selectList(subTaskQuery);
 
-        // 4. 组装成您需要的 DTO (Data Transfer Object) 格式
-
-        // 组装 user 部分
+        // 4. 组装成 DTO (保持不变)
         Map<String, Object> userData = new HashMap<>();
         userData.put("user_id", targetUser.getUserId());
         userData.put("mbti_type", targetUser.getMbtiType());
 
-        // 组装 tasks 列表
         List<Map<String, Object>> taskList = new ArrayList<>();
         for (SubTaskPojo st : recentSubTasks) {
             Map<String, Object> taskData = new HashMap<>();
             taskData.put("sub_task_id", st.getSubTaskId());
             taskData.put("sub_task_name", st.getSubTaskName());
-
-            // (可选) 转换状态码为中文，如果 AI 需要的话
-            // String statusDisplay = convertStatusToChinese(st.getStatus());
-            // taskData.put("status", statusDisplay);
-            taskData.put("status", st.getStatus()); // 暂时用原始状态码 (COMPLETED, TODO 等)
-
+            taskData.put("status", st.getStatus());
             taskData.put("created_at", st.getCreatedAt());
-            taskData.put("end_time", st.getEndTime()); // 结束时间
+            taskData.put("end_time", st.getEndTime());
             taskList.add(taskData);
         }
 
-        // 组装最终响应
         Map<String, Object> response = new HashMap<>();
         response.put("user", userData);
         response.put("tasks", taskList);
@@ -90,15 +74,32 @@ public class AiAnalysisServiceImpl implements AiAnalysisService {
         return response;
     }
 
-    // (可选的辅助方法)
-    // private String convertStatusToChinese(String status) {
-    //     switch (status) {
-    //         case "COMPLETED": return "已完成";
-    //         case "IN_PROGRESS": return "进行中";
-    //         case "TODO": return "待办";
-    //         case "PENDING_APPROVAL": return "待审批";
-    //         case "REJECTED": return "已驳回";
-    //         default: return status;
-    //     }
-    // }
+    /**
+     * 辅助方法：权限检查
+     */
+    private void checkPermission(UsersPojo currentUser, UsersPojo targetUser) {
+        // 规则 1: 用户访问自己的数据 -> 允许
+        if (Objects.equals(currentUser.getUserId(), targetUser.getUserId())) {
+            return;
+        }
+
+        RolePojo role = roleMapper.selectById(currentUser.getRoleId());
+        String roleName = (role != null) ? role.getRoleName() : "EMPLOYEE";
+
+        // 规则 2: 管理员 (ADMIN) 或 创始人 (FOUNDER) -> 允许所有
+        if ("ADMIN".equals(roleName) || "FOUNDER".equals(roleName)) {
+            return;
+        }
+
+        // 规则 3: 部门老总 (DEPARTMENT_HEAD) 访问本部门员工 -> 允许
+        if ("DEPARTMENT_HEAD".equals(roleName)) {
+            if (currentUser.getDepartmentId() != null &&
+                    Objects.equals(currentUser.getDepartmentId(), targetUser.getDepartmentId())) {
+                return;
+            }
+        }
+
+        // 其他情况 -> 拒绝
+        throw new SecurityException("无权访问该用户的 AI 分析数据");
+    }
 }
