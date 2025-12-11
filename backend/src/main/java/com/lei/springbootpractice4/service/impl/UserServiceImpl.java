@@ -119,14 +119,10 @@ public class UserServiceImpl implements UserService {
         
         System.out.println("=== Filter params: username=" + username + ", roleName=" + roleName);
 
-        // 添加用户名查询条件（模糊查询，同时匹配 username 和 full_name）
+        // 添加用户名查询条件（模糊查询）
         if (StringUtils.hasText(username)) {
-            System.out.println("=== Adding username/fullName LIKE filter: " + username);
-            queryWrapper.and(wrapper -> wrapper
-                .like("username", username)
-                .or()
-                .like("full_name", username)
-            );
+            System.out.println("=== Adding username LIKE filter: " + username);
+            queryWrapper.like("username", username);
         }
 
         // 添加角色查询条件

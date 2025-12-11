@@ -65,6 +65,10 @@ public class TaskServiceImpl implements TaskService {
         }
 
         taskMapper.insert(task);
+        
+        // *** 创建对应的子任务副本用于展示 ***
+        createSubTaskCopyForDisplay(task, creatorId);
+        
         UsersPojo creator = userMapper.selectById(creatorId);
         fillTaskNames(task); // 填充名字
         logService.logTaskActivity(creator, task, "TASK_CREATED", "创建了",location);
@@ -101,6 +105,9 @@ public class TaskServiceImpl implements TaskService {
         task.setStatus("IN_PROGRESS");
         task.setUpdatedAt(LocalDateTime.now());
         taskMapper.updateById(task);
+        
+        // *** 同步更新对应的子任务副本状态 ***
+        syncSubTaskCopyWithMainTask(task);
 
         /*添加日志*/
         if (insertedCount > 0) {
@@ -283,6 +290,11 @@ public class TaskServiceImpl implements TaskService {
         }
 
         taskMapper.updateById(taskToUpdate); // updateById 会自动忽略 null 字段
+        
+        // *** 同步更新对应的子任务副本 ***
+        TaskPojo updatedTask = taskMapper.selectById(taskId); // 获取更新后的完整数据
+        syncSubTaskCopyWithMainTask(updatedTask);
+        
         logService.logTaskActivity(currentUser, existingTask, "TASK_UPDATED", "更新了", location);
 
         // 3. 返回更新后的完整数据
@@ -380,5 +392,92 @@ public class TaskServiceImpl implements TaskService {
             }
         }
         // 可以在这里也填充 creatorName (如果需要)
+    }
+    
+    // ==================== 主任务与子任务副本同步相关方法 ====================
+    
+    /**
+     * 创建主任务的子任务副本用于展示
+     * 子任务名称格式：主任务 - {原任务名} - {主任务ID}
+     * 注意：这是独立的子任务，不设置 parent_task_id，避免循环引用
+     */
+    private void createSubTaskCopyForDisplay(TaskPojo mainTask, String creatorId) {
+        SubTaskPojo subTaskCopy = new SubTaskPojo();
+        
+        // 设置子任务基本信息
+        // *** 关键修改：不设置 parent_task_id，这是独立的子任务 ***
+        subTaskCopy.setParentTaskId(null);
+        subTaskCopy.setParentSubTaskId(null);
+        subTaskCopy.setCreatorId(creatorId);
+        // 在名称中包含主任务ID，用于后续查找和同步
+        subTaskCopy.setSubTaskName("主任务 - " + mainTask.getTaskName() + " - #" + mainTask.getTaskId());
+        
+        // 直接使用主任务的状态（不做映射）
+        subTaskCopy.setStatus(mainTask.getStatus());
+        subTaskCopy.setAssignedToId(mainTask.getResponsiblePersonId()); // 分配给主任务负责人
+        
+        // 设置时间（使用主任务的时间）
+        if (mainTask.getStartDate() != null) {
+            subTaskCopy.setStartTime(mainTask.getStartDate().atStartOfDay());
+        }
+        if (mainTask.getEndDate() != null) {
+            subTaskCopy.setEndTime(mainTask.getEndDate().atTime(23, 59, 59));
+        }
+        
+        subTaskCopy.setCreatedAt(LocalDateTime.now());
+        subTaskCopy.setUpdatedAt(LocalDateTime.now());
+        
+        // 插入子任务
+        subTaskMapper.insert(subTaskCopy);
+        
+        System.out.println("=== 已为主任务 ID:" + mainTask.getTaskId() + " 创建独立的展示用子任务副本 ID:" + subTaskCopy.getSubTaskId());
+    }
+    
+    /**
+     * 同步更新主任务对应的子任务副本
+     * 当主任务信息更新时调用
+     * 直接同步主任务的状态，不做映射
+     */
+    private void syncSubTaskCopyWithMainTask(TaskPojo mainTask) {
+        // 查找对应的子任务副本（通过名称中的主任务ID标识）
+        QueryWrapper<SubTaskPojo> query = new QueryWrapper<>();
+        query.isNull("parent_task_id") // 独立的子任务，没有父任务
+             .isNull("parent_sub_task_id") // 也没有父子任务
+             .like("sub_task_name", "主任务 - " + mainTask.getTaskName() + " - #" + mainTask.getTaskId()); // 精确匹配
+        
+        List<SubTaskPojo> subTaskCopies = subTaskMapper.selectList(query);
+        
+        if (subTaskCopies.isEmpty()) {
+            System.out.println("=== 警告：未找到主任务 ID:" + mainTask.getTaskId() + " 的子任务副本");
+            return;
+        }
+        
+        // 更新所有找到的副本（理论上应该只有一个）
+        for (SubTaskPojo subTaskCopy : subTaskCopies) {
+            SubTaskPojo updateData = new SubTaskPojo();
+            updateData.setSubTaskId(subTaskCopy.getSubTaskId());
+            
+            // 同步名称（保持ID标识）
+            updateData.setSubTaskName("主任务 - " + mainTask.getTaskName() + " - #" + mainTask.getTaskId());
+            
+            // 直接同步主任务的状态（不做映射）
+            updateData.setStatus(mainTask.getStatus());
+            
+            // 同步负责人
+            updateData.setAssignedToId(mainTask.getResponsiblePersonId());
+            
+            // 同步时间
+            if (mainTask.getStartDate() != null) {
+                updateData.setStartTime(mainTask.getStartDate().atStartOfDay());
+            }
+            if (mainTask.getEndDate() != null) {
+                updateData.setEndTime(mainTask.getEndDate().atTime(23, 59, 59));
+            }
+            
+            updateData.setUpdatedAt(LocalDateTime.now());
+            
+            subTaskMapper.updateById(updateData);
+            System.out.println("=== 已同步主任务 ID:" + mainTask.getTaskId() + " 的子任务副本 ID:" + subTaskCopy.getSubTaskId());
+        }
     }
 }
