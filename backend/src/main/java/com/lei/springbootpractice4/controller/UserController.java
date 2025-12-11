@@ -126,10 +126,28 @@ public class UserController { // 移除类级别的 RequestMapping 或修改
 
     /**
      * 获取用户列表 (支持分页和查询)
-     * 前端请求示例: GET /users?pageNum=1&pageSize=10&name=张
+     * 前端请求示例: GET /api/users?current=1&size=10&username=张三&roleName=管理员
      */
     @GetMapping("/api/users")
-    public ResponseEntity<Page<UsersPojo>> getUserList(@RequestParam Map<String, Object> params) {
+    public ResponseEntity<Page<UsersPojo>> getUserList(
+            @RequestParam(defaultValue = "1") int current,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) String roleName) {
+        
+        System.out.println("Received params - current: " + current + ", size: " + size + ", username: " + username + ", roleName: " + roleName);
+        
+        // 将参数封装到Map中，保持与现有Service方法的兼容性
+        Map<String, Object> params = new HashMap<>();
+        params.put("page", current);  // 将 current 映射为 page
+        params.put("size", size);
+        if (username != null && !username.trim().isEmpty()) {
+            params.put("username", username.trim());
+        }
+        if (roleName != null && !roleName.trim().isEmpty()) {
+            params.put("roleName", roleName.trim());
+        }
+        
         Page<UsersPojo> userPage = userService.getUserList(params);
         return ResponseEntity.ok(userPage);
     }

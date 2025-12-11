@@ -15,13 +15,14 @@ INSERT INTO "PUBLIC"."DEPARTMENTS" VALUES
 INSERT INTO "PUBLIC"."USERS" VALUES
                                  ('admin-uuid-placeholder', 'admin', '$2a$12$9eUrTf/kqVmXp7AlpMjBjuR43SI1nuMRmkKDG7hxBTku1TRKj96pu', NULL, U&'\7ba1\7406\5458', 1, NULL, 'ENFJ', U&'\6d3b\8dc3', TIMESTAMP '2025-11-14 14:10:45.289262'),
                                  ('575bb55af27cb8d5fb6d31b3aec95acd', 'xm', '$2a$10$/uuFNhwZbaZ4MEP4Oq9ukOAG.DVAlCC5yaLp0OJsWzmVXWJ.LIe62', 'user-f2ee3018@example.invalid', U&'\5c0f\660e', 5, 1, 'INTP', U&'\6d3b\8dc3', TIMESTAMP '2025-11-14 14:10:45.291325'),
-                                 ('547309c2503d6dd1bec16a200ea14458', 'xz', '$2a$10$/uuFNhwZbaZ4MEP4Oq9ukOAG.DVAlCC5yaLp0OJsWzmVXWJ.LIe62', 'user-236d5cf4@example.invalid', U&'\5c0f\5f20', 4, 1, 'INTJ', U&'\6d3b\8dc3', TIMESTAMP '2025-11-14 14:10:45.292337');
+                                 ('547309c2503d6dd1bec16a200ea14458', 'xz', '$2a$10$/uuFNhwZbaZ4MEP4Oq9ukOAG.DVAlCC5yaLp0OJsWzmVXWJ.LIe62', 'user-236d5cf4@example.invalid', U&'\5c0f\5f20', 4, 1, 'INTJ', U&'\6d3b\8dc3', TIMESTAMP '2025-11-14 14:10:45.292337'),
+                                 ('548309c2503d6dd1bec16a200ea14458', 'xh', '$2a$10$/uuFNhwZbaZ4MEP4Oq9ukOAG.DVAlCC5yaLp0OJsWzmVXWJ.LIe62', 'user-24aa1b1b@example.invalid', U&'\5c0f\5f21', 3, 1, 'INTJ', U&'\6d3b\8dc3', TIMESTAMP '2025-11-14 14:10:45.292337');
 
 INSERT INTO "PUBLIC"."TASKS" VALUES
-                                 (1, U&'\4e3b\4efb\52a1 - \7f51\7ad9\91cd\6784', U&'\91cd\65b0\8bbe\8ba1\516c\53f8\5b98\65b9\7f51\7ad9', 'admin-uuid-placeholder', 'admin-uuid-placeholder', 'TEAM', 'HIGH', 'PENDING_TEAM', DATE '2025-12-01', DATE '2026-01-15',NULL, TIMESTAMP '2025-12-14 14:10:45.292337', TIMESTAMP '2025-12-14 14:10:45.292337'),
-                                 (2, U&'\4e3b\4efb\52a1 - \79fb\52a8\7aef\9002\914d', U&'\4f18\5316\79fb\52a8\7aef\7528\6237\4f53\9a8c', 'admin-uuid-placeholder', '547309c2503d6dd1bec16a200ea14458', 'TEAM', 'MEDIUM', 'PENDING_TEAM', DATE '2025-12-05', DATE '2025-12-25',NULL, TIMESTAMP '2025-12-14 14:10:45.293534', TIMESTAMP '2025-12-14 14:10:45.293534'),
-                                 (3, U&'\4e3b\4efb\52a1 - Q4 \6280\672f\5206\4eab', U&'\51c6\5907\5e76\7ec4\7ec7\7b2c\56db\5b63\5ea6\6280\672f\5206\4eab\4f1a', '547309c2503d6dd1bec16a200ea14458', '547309c2503d6dd1bec16a200ea14458', 'TEAM', 'MEDIUM', 'IN_PROGRESS', DATE '2025-12-10', DATE '2025-12-30', NULL,TIMESTAMP '2025-12-14 14:10:45.293534', TIMESTAMP '2025-12-14 14:10:45.293534'),
-                                 (4, U&'\4e3b\4efb\52a1 - \79fb\52a8\7aef\9002\914d', NULL, '547309c2503d6dd1bec16a200ea14458', '547309c2503d6dd1bec16a200ea14458', 'TEAM', 'MEDIUM', 'IN_PROGRESS', DATE '2025-12-05', DATE '2025-12-25', NULL,TIMESTAMP '2025-12-14 14:23:42.215689', TIMESTAMP '2025-12-14 14:31:45.596461');
+                                 (1, U&'\4e3b\4efb\52a1 - \7f51\7ad9\91cd\6784', U&'\91cd\65b0\8bbe\8ba1\516c\53f8\5b98\65b9\7f51\7ad9', 'admin-uuid-placeholder', 'admin-uuid-placeholder', 'TEAM', 'HIGH', 'PENDING_TEAM', DATE '2025-12-01', DATE '2026-01-15',DATE '2025-12-01', TIMESTAMP '2025-12-14 14:10:45.292337', TIMESTAMP '2025-12-14 14:10:45.292337'),
+                                 (2, U&'\4e3b\4efb\52a1 - \79fb\52a8\7aef\9002\914d', U&'\4f18\5316\79fb\52a8\7aef\7528\6237\4f53\9a8c', 'admin-uuid-placeholder', '547309c2503d6dd1bec16a200ea14458', 'TEAM', 'MEDIUM', 'PENDING_TEAM', DATE '2025-12-05', DATE '2025-12-25',DATE '2025-12-01', TIMESTAMP '2025-12-14 14:10:45.293534', TIMESTAMP '2025-12-14 14:10:45.293534'),
+                                 (3, U&'\4e3b\4efb\52a1 - Q4 \6280\672f\5206\4eab', U&'\51c6\5907\5e76\7ec4\7ec7\7b2c\56db\5b63\5ea6\6280\672f\5206\4eab\4f1a', '547309c2503d6dd1bec16a200ea14458', '547309c2503d6dd1bec16a200ea14458', 'TEAM', 'MEDIUM', 'IN_PROGRESS', DATE '2025-12-10', DATE '2025-12-30', DATE '2025-12-01',TIMESTAMP '2025-12-14 14:10:45.293534', TIMESTAMP '2025-12-14 14:10:45.293534'),
+                                 (4, U&'\4e3b\4efb\52a1 - \79fb\52a8\7aef\9002\914d', NULL, '547309c2503d6dd1bec16a200ea14458', '547309c2503d6dd1bec16a200ea14458', 'TEAM', 'MEDIUM', 'IN_PROGRESS', DATE '2025-12-05', DATE '2025-12-25', DATE '2025-12-01',TIMESTAMP '2025-12-14 14:23:42.215689', TIMESTAMP '2025-12-14 14:31:45.596461');
 
 INSERT INTO "PUBLIC"."SUB_TASKS" VALUES
                                      (1, 3, NULL, '547309c2503d6dd1bec16a200ea14458', U&'\5b50\4efb\52a1 - \51c6\5907\5206\4eab PPT', 'TODO', '575bb55af27cb8d5fb6d31b3aec95acd', TIMESTAMP '2025-12-11 09:00:00', TIMESTAMP '2025-12-15 18:00:00', NULL, NULL, TIMESTAMP '2025-12-14 14:10:45.294551', NULL, TIMESTAMP '2025-12-14 14:10:45.294551'),
@@ -54,8 +55,8 @@ INSERT INTO "PUBLIC"."COMPANY_MATTERS" VALUES
 
 ALTER TABLE roles ALTER COLUMN role_id RESTART WITH (SELECT COALESCE(MAX(role_id) + 1, 1) FROM roles);
 ALTER TABLE departments ALTER COLUMN department_id RESTART WITH (SELECT COALESCE(MAX(department_id) + 1, 1) FROM departments);
---ALTER TABLE tasks ALTER COLUMN task_id RESTART WITH (SELECT COALESCE(MAX(task_id) + 1, 1) FROM tasks);
---ALTER TABLE sub_tasks ALTER COLUMN sub_task_id RESTART WITH (SELECT COALESCE(MAX(sub_task_id) + 1, 1) FROM sub_tasks);
+ALTER TABLE tasks ALTER COLUMN task_id RESTART WITH (SELECT COALESCE(MAX(task_id) + 1, 1) FROM tasks);
+ALTER TABLE sub_tasks ALTER COLUMN sub_task_id RESTART WITH (SELECT COALESCE(MAX(sub_task_id) + 1, 1) FROM sub_tasks);
 ALTER TABLE logs ALTER COLUMN log_id RESTART WITH (SELECT COALESCE(MAX(log_id) + 1, 1) FROM logs);
 ALTER TABLE company_matters ALTER COLUMN matter_id RESTART WITH (SELECT COALESCE(MAX(matter_id) + 1, 1) FROM company_matters);
 --ALTER TABLE deliverables ALTER COLUMN deliverable_id RESTART WITH (SELECT COALESCE(MAX(deliverable_id) + 1, 1) FROM deliverables);
@@ -64,5 +65,3 @@ ALTER TABLE company_matters ALTER COLUMN matter_id RESTART WITH (SELECT COALESCE
 -- 你的脚本里显示 "0 +/- SELECT COUNT" 所以理论上不该有 Insert。
 -- 我上面写了一个占位符，如果你运行报错，直接把 INSERT INTO DELIVERABLES 这一整段删掉即可。
 
--- 重置 company_matters 表的自增序列（修复创建新事项时的主键冲突问题）
-ALTER TABLE company_matters ALTER COLUMN matter_id RESTART WITH 7;

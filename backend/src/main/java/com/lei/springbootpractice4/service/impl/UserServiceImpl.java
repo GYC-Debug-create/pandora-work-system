@@ -90,54 +90,67 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Page<UsersPojo> getUserList(Map<String, Object> params) {
-        // 获取分页参数，确保类型安全
+        System.out.println("=== getUserList called with params: " + params);
+        
+        // 获取分页参数
         long pageNum = 1;
         long pageSize = 10;
         try {
-            pageNum = Long.parseLong(params.getOrDefault("pageNum", "1").toString());
-            pageSize = Long.parseLong(params.getOrDefault("pageSize", "10").toString());
+            Object pageParam = params.get("page");
+            Object sizeParam = params.get("size");
+            
+            if (pageParam != null) {
+                pageNum = Long.parseLong(pageParam.toString());
+            }
+            if (sizeParam != null) {
+                pageSize = Long.parseLong(sizeParam.toString());
+            }
         } catch (NumberFormatException e) {
-            System.err.println("Invalid pagination parameters received.");
+            System.err.println("Invalid pagination parameters: " + e.getMessage());
         }
+        
+        System.out.println("=== Pagination: page=" + pageNum + ", size=" + pageSize);
         Page<UsersPojo> page = new Page<>(pageNum, pageSize);
-
         QueryWrapper<UsersPojo> queryWrapper = new QueryWrapper<>();
 
-        // 获取并处理查询参数
-        String name = params.get("name") instanceof String ? (String) params.get("name") : null;
-        String email = params.get("email") instanceof String ? (String) params.get("email") : null;
-        String roleName = params.get("role") instanceof String ? (String) params.get("role") : null; // 获取的是角色名称
+        // 获取查询参数（只处理前端实际传递的参数）
+        String username = params.get("username") instanceof String ? (String) params.get("username") : null;
+        String roleName = params.get("roleName") instanceof String ? (String) params.get("roleName") : null;
+        
+        System.out.println("=== Filter params: username=" + username + ", roleName=" + roleName);
 
-        // 添加查询条件
-        if (StringUtils.hasText(name)) {
-            queryWrapper.like("username", name);
-        }
-        if (StringUtils.hasText(email)) {
-            queryWrapper.like("email", email);
+        // 添加用户名查询条件（模糊查询）
+        if (StringUtils.hasText(username)) {
+            System.out.println("=== Adding username LIKE filter: " + username);
+            queryWrapper.like("username", username);
         }
 
-        // --- 健壮的角色查询逻辑 ---
+        // 添加角色查询条件
         if (StringUtils.hasText(roleName)) {
-            System.out.println("Querying for role name: " + roleName); // 增加日志方便调试
+            System.out.println("=== Searching for role: " + roleName);
             QueryWrapper<RolePojo> roleQuery = new QueryWrapper<>();
-            roleQuery.eq("role_name", roleName).last("LIMIT 1");
+            // 使用数据库字段名 role_name，而不是 Java 属性名 roleName
+            roleQuery.like("role_name", roleName);
             RolePojo role = roleMapper.selectOne(roleQuery);
+            
             if (role != null) {
-                System.out.println("Found role ID: " + role.getRoleId()); // 增加日志
+                System.out.println("=== Found role ID: " + role.getRoleId() + " for roleName: " + roleName);
+                // 同样使用数据库字段名 role_id
                 queryWrapper.eq("role_id", role.getRoleId());
             } else {
-                // 如果传入了前端存在但后端roles表没有的角色名（理论上不应发生），则查询无结果
-                System.err.println("Role name not found in database: " + roleName);
-                queryWrapper.eq("role_id", -1); // 确保没有匹配
+                System.err.println("=== Role NOT found: " + roleName + ", returning empty result");
+                queryWrapper.eq("role_id", -1);
             }
         }
-        // --- 角色查询逻辑结束 ---
 
+        // 执行查询
+        System.out.println("=== Executing query...");
         Page<UsersPojo> userPage = userMapper.selectPage(page, queryWrapper);
-        userPage.getRecords().forEach(user -> user.setPasswordHash(null));
+        System.out.println("=== Query returned " + userPage.getRecords().size() + " records, total: " + userPage.getTotal());
 
+        // 填充关联数据并清除敏感信息
         userPage.getRecords().forEach(user -> {
-            user.setPasswordHash(null); // 清除密码哈希
+            user.setPasswordHash(null);
 
             // 查询角色名
             if (user.getRoleId() != null) {
@@ -155,14 +168,13 @@ public class UserServiceImpl implements UserService {
                 }
             }
 
-            // status 字段已经从数据库读取，无需再设置
-            // 如果数据库中 status 为 null，设置默认值
+            // 设置默认状态
             if (user.getStatus() == null) {
                 user.setStatus("活跃");
             }
-
         });
-        System.out.println("Returning " + userPage.getTotal() + " users."); // 增加日志
+        
+        System.out.println("=== Returning result with " + userPage.getTotal() + " total users");
         return userPage;
     }
 
