@@ -39,6 +39,17 @@ public class SubTaskServiceImpl implements SubTaskService {
     @Override
     @Transactional
     public SubTaskPojo createSubTask(SubTaskPojo subTask, String creatorId, String location) {
+        System.out.println("========================================");
+        System.out.println("=== 开始创建子任务 ===");
+        System.out.println("任务名称: " + subTask.getSubTaskName());
+        System.out.println("创建人: " + creatorId);
+        System.out.println("父任务ID: " + subTask.getParentTaskId());
+        System.out.println("父子任务ID: " + subTask.getParentSubTaskId());
+        System.out.println("负责人: " + subTask.getAssignedToId());
+        System.out.println("开始时间: " + subTask.getStartTime());
+        System.out.println("结束时间: " + subTask.getEndTime());
+        System.out.println("========================================");
+        
         subTask.setCreatorId(creatorId);
         subTask.setStatus("TODO");
         subTask.setCreatedAt(LocalDateTime.now());
@@ -81,33 +92,18 @@ public class SubTaskServiceImpl implements SubTaskService {
             }
         }
 
-        if (startTime != null && endTime != null) {
-            if (startTime.isAfter(endTime)) {
-                throw new IllegalArgumentException("子任务的开始时间不能晚于结束时间");
-            }
-            QueryWrapper<SubTaskPojo> conflictCheckWrapper = new QueryWrapper<>();
-            conflictCheckWrapper
-                    .eq("assigned_to_id", assignedToId)
-                    .ne("status", "COMPLETED")
-                    .ne("status", "CANCELLED")
-                    .ne(parentSubTaskId != null, "sub_task_id", parentSubTaskId)
-                    .and(wrapper -> wrapper
-                            .lt("start_time", endTime)
-                            .gt("end_time", startTime));
-            List<SubTaskPojo> conflictingTasks = subTaskMapper.selectList(conflictCheckWrapper);
-            if (!conflictingTasks.isEmpty()) {
-                SubTaskPojo conflict = conflictingTasks.get(0);
-                String errorMessage = String.format(
-                        "时间冲突：与任务 '%s' (%s - %s) 时间重叠。",
-                        conflict.getSubTaskName(), conflict.getStartTime(), conflict.getEndTime()
-                );
-                throw new IllegalStateException(errorMessage);
-            }
-        } else {
-            System.out.println("警告: 子任务未指定开始或结束时间，跳过时间冲突检查。");
+        // 基本时间校验：开始时间不能晚于结束时间
+        if (startTime != null && endTime != null && startTime.isAfter(endTime)) {
+            throw new IllegalArgumentException("子任务的开始时间不能晚于结束时间");
         }
+        
+        // 注意：已移除时间冲突检测，允许同一负责人有时间重叠的任务
 
         subTaskMapper.insert(subTask);
+        System.out.println("=== 子任务创建成功 ===");
+        System.out.println("子任务ID: " + subTask.getSubTaskId());
+        System.out.println("========================================");
+        
         fillNames(subTask);
         UsersPojo creator = userMapper.selectById(creatorId);
         String prefix = (subTask.getParentTaskId() != null || subTask.getParentSubTaskId() != null) ? "分解出" : "创建了";
@@ -417,6 +413,9 @@ public class SubTaskServiceImpl implements SubTaskService {
                     parentTask.setStatus("COMPLETED");
                     parentTask.setUpdatedAt(LocalDateTime.now());
                     taskMapper.updateById(parentTask);
+                    
+                    // *** 同步更新主任务对应的子任务副本 ***
+                    syncMainTaskCopyWithTask(parentTask);
                 }
             }
 
@@ -433,16 +432,15 @@ public class SubTaskServiceImpl implements SubTaskService {
         queryWrapper
                 .eq("assigned_to_id", currentUserId) // 负责人是自己
                 .ne("creator_id", currentUserId)     // 创建人不是自己 (公司/上级派发)
-                // 排除已结束的状态
-                .ne("status", "COMPLETED")
-                .ne("status", "CANCELLED")
-                .ne("status", "REJECTED") // 根据需求，被驳回的可能也算待处理，看您业务。这里暂时排除，只看进行中/待办
-                // 排除已逾期的
-                .ne("status", "OVERDUE")
-                // 确保时间未过 (双重保险，可选)
+                // 排除已结束的状态（包括主任务副本可能的状态）
+                .ne("status", "COMPLETED")           // 已完成
+                .ne("status", "CANCELLED")           // 已取消
+                .ne("status", "REJECTED")            // 已驳回
+                .ne("status", "OVERDUE")             // 已逾期
+                // 确保时间未过期（双重保险）
                 .gt("end_time", LocalDateTime.now())
-
-                .orderByDesc("created_at") // 最新的
+                // 按创建时间倒序，最新的在前
+                .orderByDesc("created_at")
                 .last("LIMIT 10"); // 前10条
 
         List<SubTaskPojo> tasks = subTaskMapper.selectList(queryWrapper);
@@ -456,20 +454,59 @@ public class SubTaskServiceImpl implements SubTaskService {
         queryWrapper
                 .eq("creator_id", currentUserId)     // 创建人是自己 (个人事项)
                 // .eq("assigned_to_id", currentUserId) // 通常个人事项也是分给自己，可以加上这句更严谨
-
                 // 排除已结束的状态
-                .ne("status", "COMPLETED")
-                .ne("status", "CANCELLED")
-                // 排除已逾期的
-                .ne("status", "OVERDUE")
-                // 确保时间未过 (双重保险，可选)
+                .ne("status", "COMPLETED")           // 已完成
+                .ne("status", "CANCELLED")           // 已取消
+                .ne("status", "REJECTED")            // 已驳回
+                .ne("status", "OVERDUE")             // 已逾期
+                // 确保时间未过期（双重保险）
                 .gt("end_time", LocalDateTime.now())
-
-                .orderByDesc("created_at") // 最新的
+                // 按创建时间倒序，最新的在前
+                .orderByDesc("created_at")
                 .last("LIMIT 10"); // 前10条
 
         List<SubTaskPojo> tasks = subTaskMapper.selectList(queryWrapper);
         tasks.forEach(this::fillNames); // 填充名字信息
         return tasks;
+    }
+    
+    // ==================== 主任务与子任务副本同步方法 ====================
+    
+    /**
+     * 同步更新主任务对应的子任务副本
+     * 当主任务自动完成时调用
+     */
+    private void syncMainTaskCopyWithTask(TaskPojo mainTask) {
+        // 查找对应的子任务副本（通过名称中的主任务ID标识）
+        QueryWrapper<SubTaskPojo> query = new QueryWrapper<>();
+        query.isNull("parent_task_id") // 独立的子任务，没有父任务
+             .isNull("parent_sub_task_id") // 也没有父子任务
+             .like("sub_task_name", " - #" + mainTask.getTaskId()); // 通过ID标识查找
+        
+        List<SubTaskPojo> subTaskCopies = subTaskMapper.selectList(query);
+        
+        if (subTaskCopies.isEmpty()) {
+            System.out.println("=== 警告：未找到主任务 ID:" + mainTask.getTaskId() + " 的子任务副本");
+            return;
+        }
+        
+        // 更新所有找到的副本（理论上应该只有一个）
+        for (SubTaskPojo subTaskCopy : subTaskCopies) {
+            SubTaskPojo updateData = new SubTaskPojo();
+            updateData.setSubTaskId(subTaskCopy.getSubTaskId());
+            
+            // 同步状态（主要是 COMPLETED 状态）
+            updateData.setStatus(mainTask.getStatus());
+            
+            // 如果主任务完成，设置完成时间
+            if ("COMPLETED".equals(mainTask.getStatus())) {
+                updateData.setCompletedAt(LocalDateTime.now());
+            }
+            
+            updateData.setUpdatedAt(LocalDateTime.now());
+            
+            subTaskMapper.updateById(updateData);
+            System.out.println("=== 已同步主任务 ID:" + mainTask.getTaskId() + " 的子任务副本 ID:" + subTaskCopy.getSubTaskId() + " 状态为: " + mainTask.getStatus());
+        }
     }
 }

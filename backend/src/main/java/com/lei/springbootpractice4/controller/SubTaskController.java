@@ -196,9 +196,11 @@ public class SubTaskController {
         } catch (SecurityException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
         } catch (IllegalStateException e) {
+            System.err.println("=== HTTP 409 CONFLICT - 创建子任务冲突: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            System.err.println("创建子任务时发生内部错误: " + e.getMessage());
+            System.err.println("=== HTTP 500 - 创建子任务时发生内部错误: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "创建子任务失败"));
         }
