@@ -24,4 +24,12 @@ public interface LogService {
     void logSubTaskActivity(UsersPojo user, SubTaskPojo subTask, String activityType, String descriptionPrefix, String location);
 
     Page<LogPojo> getLogs(Map<String, Object> params, UsersPojo currentUser);
+    /**
+     * 修改日志描述 (权限规则：能看到该日志的人就能修改)
+     * @param logId 日志ID
+     * @param newDescription 新的描述内容
+     * @param currentUser 当前操作用户
+     * @return 更新后的日志对象
+     */
+    LogPojo updateLogDescription(Integer logId, String newDescription, UsersPojo currentUser);
 }

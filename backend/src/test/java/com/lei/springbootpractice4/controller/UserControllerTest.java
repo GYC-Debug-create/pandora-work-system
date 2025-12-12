@@ -29,11 +29,19 @@ public class UserControllerTest {
 
     private UsersPojo testUser;
 
+/**
+ * 在每个测试方法执行前运行，用于初始化测试环境
+ * 初始化Mockito注解，创建并配置测试用户对象
+ */
     @BeforeEach
     void setUp() {
+    // 打启Mockito的模拟注解支持
         MockitoAnnotations.openMocks(this);
+    // 创建测试用户对象
         testUser = new UsersPojo();
+    // 设置测试用户名
         testUser.setUsername("testuser");
+    // 设置测试用户密码
         testUser.setPassword("password123");
     }
 

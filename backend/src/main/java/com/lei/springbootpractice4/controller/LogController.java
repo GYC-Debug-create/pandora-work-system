@@ -10,10 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -77,5 +74,43 @@ public class LogController {
             return userMapper.selectById(userId);
         }
         return null;
+    }
+
+
+    /**
+     * 修改日志描述
+     * 权限：能看到日志的人就能改
+     */
+    @PutMapping("/{logId}/description")
+    public ResponseEntity<Object> updateLogDescription(
+            @PathVariable Integer logId,
+            @RequestBody Map<String, String> payload, // 接收 {"description": "..."}
+            HttpServletRequest request) {
+
+        String newDescription = payload.get("description");
+        if (newDescription == null) { // 允许为空字符串，但不允许 null
+            return ResponseEntity.badRequest().body(Map.of("error", "请求体必须包含 description 字段"));
+        }
+
+        try {
+            // 1. 获取当前用户
+            UsersPojo currentUser = getCurrentUser(request);
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "无效的用户凭证"));
+            }
+
+            // 2. 调用 Service
+            LogPojo updatedLog = logService.updateLogDescription(logId, newDescription, currentUser);
+            return ResponseEntity.ok(updatedLog);
+
+        } catch (IllegalArgumentException e) { // 日志不存在
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        } catch (SecurityException e) { // 无权限
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("更新日志描述失败: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "更新日志描述失败"));
+        }
     }
 }

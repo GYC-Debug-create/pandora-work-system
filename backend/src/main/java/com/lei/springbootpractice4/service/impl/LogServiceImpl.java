@@ -198,4 +198,81 @@ public class LogServiceImpl implements LogService {
 
         return logPage;
     }
+    @Override
+    @Transactional
+    public LogPojo updateLogDescription(Integer logId, String newDescription, UsersPojo currentUser) {
+        // 1. 获取日志
+        LogPojo log = logMapper.selectById(logId);
+        if (log == null) {
+            throw new IllegalArgumentException("日志不存在: ID " + logId);
+        }
+
+        // 2. 权限校验：复用“查看权限”的逻辑
+        // 规则：如果我有权查看这条日志，我就有权修改它
+        if (!canViewLog(log, currentUser)) {
+            throw new SecurityException("无权修改该日志 (您无权查看此日志)");
+        }
+
+        // 3. 执行更新
+        log.setDescription(newDescription);
+        // 也可以更新个时间，或者记录个修改人，看需求。这里只更新描述。
+        logMapper.updateById(log);
+
+        // 4. 填充名字以便返回给前端展示
+        fillLogNames(log);
+
+        return log;
+    }
+
+
+    private boolean canViewLog(LogPojo log, UsersPojo currentUser) {
+        RolePojo userRole = roleMapper.selectById(currentUser.getRoleId());
+        String roleName = (userRole != null) ? userRole.getRoleName() : "EMPLOYEE";
+        String currentUserId = currentUser.getUserId();
+
+        // 1. 管理员/创始人：看所有
+        if ("ADMIN".equals(roleName) || "FOUNDER".equals(roleName)) {
+            return true;
+        }
+
+        // 2. 部门老总/团队长：看本部门成员的日志
+        if ("DEPARTMENT_HEAD".equals(roleName) || "TEAM_LEAD".equals(roleName)) {
+            Integer currentDeptId = currentUser.getDepartmentId();
+            if (currentDeptId != null) {
+                // 获取日志所有者的信息
+                UsersPojo logOwner = userMapper.selectById(log.getUserId());
+                // 如果日志所有者存在，且与当前用户同部门，则允许
+                if (logOwner != null && Objects.equals(currentDeptId, logOwner.getDepartmentId())) {
+                    return true;
+                }
+                // 或者日志就是自己的
+                if (Objects.equals(log.getUserId(), currentUserId)) {
+                    return true;
+                }
+            }
+        }
+
+        // 3. 员工：只看自己的
+        if (Objects.equals(log.getUserId(), currentUserId)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    // --- 辅助方法：填充单条日志的名字 (复用 getLogs 里的逻辑) ---
+    private void fillLogNames(LogPojo log) {
+        if (log.getUserId() != null) {
+            UsersPojo u = userMapper.selectById(log.getUserId());
+            if (u != null) log.setUserName(getUserDisplayName(u));
+        }
+        if (log.getRelatedTaskId() != null) {
+            TaskPojo t = taskMapper.selectById(log.getRelatedTaskId());
+            if (t != null) log.setRelatedTaskName(t.getTaskName());
+        }
+        if (log.getRelatedSubTaskId() != null) {
+            SubTaskPojo st = subTaskMapper.selectById(log.getRelatedSubTaskId());
+            if (st != null) log.setRelatedSubTaskName(st.getSubTaskName());
+        }
+    }
 }
