@@ -31,3 +31,12 @@ jwt:
   secret: <REDACTED>
 file:
   upload-dir: ./uploads/
+
+server:
+  port: 8443
+  ssl:
+    enabled: true
+    key-store: classpath:keystore.p12
+    key-store-password: <REDACTED>
+    key-store-type: PKCS12
+    key-alias: pandora

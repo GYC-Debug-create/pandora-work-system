@@ -26,11 +26,28 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     @Autowired
     private JwtUtil jwtUtil;
 
+
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
-        // ... (获取 token 和 username 的逻辑保持不变) ...
+        String requestURI = request.getRequestURI();
+
+        // 检查是否是登录接口
+        if ("/api/user/login".equals(requestURI)) {
+            // 检查当前请求是否安全（即是否通过 HTTPS 访问）
+            if (!request.isSecure()) {
+                // 如果是 HTTP 访问登录接口，直接拒绝，返回 403 或重定向
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.setCharacterEncoding("UTF-8");
+                response.setContentType("application/json");
+                response.getWriter().write("{\"error\": \"为了您的数据机密性，登录接口必须使用 HTTPS 访问！\"}");
+                return;
+            }
+        }
+
+
         final String requestTokenHeader = request.getHeader("Authorization");
         String username = null;
         String jwtToken = null;
