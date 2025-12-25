@@ -6,10 +6,17 @@ spring:
     username: sa
     password: <REDACTED>
 
+  jpa:
+    # 重要：改为 update，这样重启时不会清空数据，只会更新表结构
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
   # This line explicitly tells Spring Boot to always run schema.sql
   sql:
     init:
       mode: always
+
 
   # H2 console configuration
   h2:
