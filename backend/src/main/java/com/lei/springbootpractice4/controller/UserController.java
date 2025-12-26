@@ -11,6 +11,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -56,6 +58,34 @@ public class UserController { // 移除类级别的 RequestMapping 或修改
         }
     }
 
+    @GetMapping("/api/user/me")
+    public ResponseEntity<Object> getMyFullInfo(HttpServletRequest request) {
+        try {
+            // 1. 调用你已有的工具方法，直接从 JWT 获取 userId
+            String currentUserId = getUserIdFromRequest(request);
+
+            if (currentUserId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "无效的用户凭证，请重新登录"));
+            }
+
+            // 2. 调用 Service 层通过 ID 查询完整信息 (包含角色、部门名)
+            UsersPojo userDetail = userService.getUserInfoById(currentUserId);
+
+            if (userDetail == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "未找到该用户信息"));
+            }
+
+            // 3. 返回完整的用户对象 (Service 层已处理过 passwordHash 置空)
+            return ResponseEntity.ok(userDetail);
+
+        } catch (Exception e) {
+            System.err.println("获取个人详情失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "系统内部错误"));
+        }
+    }
     // POST /user/login (保持不变)
     // 文件: backend/src/main/java/com/lei/springbootpractice4/controller/UserController.java
     @PostMapping("/api/user/login")

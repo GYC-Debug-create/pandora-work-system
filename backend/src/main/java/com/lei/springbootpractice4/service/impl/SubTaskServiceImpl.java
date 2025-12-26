@@ -194,6 +194,7 @@ public class SubTaskServiceImpl implements SubTaskService {
         }
         // --- 修改结束 ---
 
+        syncMainTaskWithSubTaskCopy(subTask);
         fillNames(subTask);
         return subTask;
     }
@@ -230,7 +231,7 @@ public class SubTaskServiceImpl implements SubTaskService {
         // 个人任务没有父级，所以 checkAndTriggerParentCompletion(subTask) 会安全地不做任何事
         checkAndTriggerParentCompletion(subTask,location);
         // --- 修改结束 ---
-
+        syncMainTaskWithSubTaskCopy(subTask);
         fillNames(subTask);
         return subTask;
     }
@@ -426,6 +427,40 @@ public class SubTaskServiceImpl implements SubTaskService {
         }
 
     }
+
+    private void syncMainTaskWithSubTaskCopy(SubTaskPojo subTaskCopy) {
+        String name = subTaskCopy.getSubTaskName();
+
+        // 1. 识别是否为主任务副本
+        if (name != null && name.startsWith("主任务 - ") && name.contains(" - #")) {
+            try {
+                // 2. 解析主任务 ID
+                String idStr = name.substring(name.lastIndexOf("#") + 1);
+                Integer mainTaskId = Integer.parseInt(idStr);
+
+                // 3. 获取并更新主任务
+                TaskPojo mainTask = taskMapper.selectById(mainTaskId);
+                if (mainTask != null) {
+                    // 检查状态是否已经一致，防止无限循环同步
+                    if (!Objects.equals(mainTask.getStatus(), subTaskCopy.getStatus())) {
+                        mainTask.setStatus(subTaskCopy.getStatus());
+                        mainTask.setUpdatedAt(LocalDateTime.now());
+
+                        // 如果副本完成了，主任务也标记完成
+                        if ("COMPLETED".equals(subTaskCopy.getStatus())) {
+                            // 可以根据需要同步更多字段
+                        }
+
+                        taskMapper.updateById(mainTask);
+                        System.out.println("=== [反向同步成功] 主任务 ID:" + mainTaskId + " 已同步副本状态: " + subTaskCopy.getStatus());
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("=== [反向同步失败] 解析 ID 或更新主任务出错: " + e.getMessage());
+            }
+        }
+    }
+
     @Override
     public List<SubTaskPojo> getTop10CompanyAssignedSubTasks(String currentUserId) {
         QueryWrapper<SubTaskPojo> queryWrapper = new QueryWrapper<>();
@@ -435,7 +470,6 @@ public class SubTaskServiceImpl implements SubTaskService {
                 // 排除已结束的状态（包括主任务副本可能的状态）
                 .ne("status", "COMPLETED")           // 已完成
                 .ne("status", "CANCELLED")           // 已取消
-                .ne("status", "REJECTED")            // 已驳回
                 .ne("status", "OVERDUE")             // 已逾期
                 // 确保时间未过期（双重保险）
                 .gt("end_time", LocalDateTime.now())
@@ -469,7 +503,7 @@ public class SubTaskServiceImpl implements SubTaskService {
         tasks.forEach(this::fillNames); // 填充名字信息
         return tasks;
     }
-    
+
     // ==================== 主任务与子任务副本同步方法 ====================
     
     /**

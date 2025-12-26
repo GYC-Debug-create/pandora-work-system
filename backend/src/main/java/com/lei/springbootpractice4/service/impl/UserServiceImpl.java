@@ -35,6 +35,31 @@ public class UserServiceImpl implements UserService {
     private PasswordEncoder passwordEncoder;
 
     @Override
+    public UsersPojo getUserInfoById(String userId) {
+        // 根据 ID 查询主键
+        UsersPojo user = userMapper.selectById(userId);
+
+        if (user != null) {
+            // 填充关联的角色名 (参考 login 逻辑)
+            if (user.getRoleId() != null) {
+                RolePojo role = roleMapper.selectById(user.getRoleId());
+                user.setRoleName(role != null ? role.getRoleName() : "未知角色");
+            }
+
+            // 填充关联的部门名 (参考 login 逻辑)
+            if (user.getDepartmentId() != null) {
+                DepartmentPojo dept = departmentMapper.selectById(user.getDepartmentId());
+                user.setDepartmentName(dept != null ? dept.getDepartmentName() : "未知部门");
+            }
+
+            // 安全处理：抹除敏感信息
+            user.setPasswordHash(null);
+        }
+        return user;
+    }
+
+
+    @Override
     public boolean registerByAdmin(UsersPojo user) {
         QueryWrapper<UsersPojo> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("username", user.getUsername());

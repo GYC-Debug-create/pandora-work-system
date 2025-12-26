@@ -46,4 +46,5 @@ public interface UserService {
      * @return MBTI 字符串 (如 "INTJ")，如果未设置则返回 null
      */
     String getUserMbti(String userId);
+    UsersPojo getUserInfoById(String userId);
 }

@@ -72,6 +72,7 @@ public class TaskServiceImpl implements TaskService {
         UsersPojo creator = userMapper.selectById(creatorId);
         fillTaskNames(task); // 填充名字
         logService.logTaskActivity(creator, task, "TASK_CREATED", "创建了",location);
+
         return task;
     }
 
@@ -438,46 +439,44 @@ public class TaskServiceImpl implements TaskService {
      * 当主任务信息更新时调用
      * 直接同步主任务的状态，不做映射
      */
+    /**
+     * 同步更新主任务对应的子任务副本
+     * 修正：仅通过名称末尾的 #ID 标识进行定位，解决改名后无法同步的问题
+     */
     private void syncSubTaskCopyWithMainTask(TaskPojo mainTask) {
-        // 查找对应的子任务副本（通过名称中的主任务ID标识）
+        // 使用 通配符 % 匹配前面的名称，只锁定末尾的 ID 标识
         QueryWrapper<SubTaskPojo> query = new QueryWrapper<>();
-        query.isNull("parent_task_id") // 独立的子任务，没有父任务
-             .isNull("parent_sub_task_id") // 也没有父子任务
-             .like("sub_task_name", "主任务 - " + mainTask.getTaskName() + " - #" + mainTask.getTaskId()); // 精确匹配
-        
+        query.isNull("parent_task_id")
+                .isNull("parent_sub_task_id")
+                .like("sub_task_name", "% - #" + mainTask.getTaskId());
+
         List<SubTaskPojo> subTaskCopies = subTaskMapper.selectList(query);
-        
+
         if (subTaskCopies.isEmpty()) {
             System.out.println("=== 警告：未找到主任务 ID:" + mainTask.getTaskId() + " 的子任务副本");
             return;
         }
-        
-        // 更新所有找到的副本（理论上应该只有一个）
+
         for (SubTaskPojo subTaskCopy : subTaskCopies) {
             SubTaskPojo updateData = new SubTaskPojo();
             updateData.setSubTaskId(subTaskCopy.getSubTaskId());
-            
-            // 同步名称（保持ID标识）
+
+            // 更新为最新的名称和 ID 标识
             updateData.setSubTaskName("主任务 - " + mainTask.getTaskName() + " - #" + mainTask.getTaskId());
-            
-            // 直接同步主任务的状态（不做映射）
+
+            // 直接同步状态、负责人和时间
             updateData.setStatus(mainTask.getStatus());
-            
-            // 同步负责人
             updateData.setAssignedToId(mainTask.getResponsiblePersonId());
-            
-            // 同步时间
+
             if (mainTask.getStartDate() != null) {
                 updateData.setStartTime(mainTask.getStartDate().atStartOfDay());
             }
             if (mainTask.getEndDate() != null) {
                 updateData.setEndTime(mainTask.getEndDate().atTime(23, 59, 59));
             }
-            
+
             updateData.setUpdatedAt(LocalDateTime.now());
-            
             subTaskMapper.updateById(updateData);
-            System.out.println("=== 已同步主任务 ID:" + mainTask.getTaskId() + " 的子任务副本 ID:" + subTaskCopy.getSubTaskId());
         }
     }
 }

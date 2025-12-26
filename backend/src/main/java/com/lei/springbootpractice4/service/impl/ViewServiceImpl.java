@@ -66,7 +66,7 @@ public class ViewServiceImpl implements ViewService {
 
         QueryWrapper<SubTaskPojo> queryWrapper = new QueryWrapper<>();
         queryWrapper
-                .eq("assigned_to_id", currentUserId) // 规则：我负责的
+                //.eq("assigned_to_id", currentUserId) // 规则：我负责的
                 .eq("creator_id", currentUserId)     // 规则：我创建的
                 .isNotNull("start_time")
                 .isNotNull("end_time")
@@ -91,7 +91,7 @@ public class ViewServiceImpl implements ViewService {
 
         QueryWrapper<SubTaskPojo> queryWrapper = new QueryWrapper<>();
         queryWrapper
-                .eq("assigned_to_id", currentUserId) // 规则：我负责的
+                //.eq("assigned_to_id", currentUserId) // 规则：我负责的
                 .eq("creator_id", currentUserId)     // 规则：我创建的
                 .isNotNull("start_time")
                 .isNotNull("end_time")
