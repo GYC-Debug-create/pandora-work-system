@@ -189,14 +189,20 @@ const initParticles = () => {
 };
 
 const handleLogin = () => {
+  // 第一步：先做前端表单校验，只检查用户名/密码是否为空。
+  // 账号密码是否正确不在前端判断，而是交给后端登录接口判断。
   loginFormRef.value.validate((valid) => {
     if (valid) {
+      // 校验通过后进入登录请求流程，按钮显示 loading，避免用户重复点击。
       loading.value = true;
 
+      // 从登录页的临时表单对象 loginForm 中取出账号密码，组装成请求体发给后端。
       login({
         username: loginForm.value.username,
         passwordHash: loginForm.value.password
       }).then(response => {
+        // 后端校验成功后返回 token 和用户信息。
+        // 前端不保存密码，后续登录态只认 token。
         const token = response.token;
         const userData = response.user;
         ElMessage.success(`登录成功，欢迎 ${userData.username}`);
@@ -205,11 +211,14 @@ const handleLogin = () => {
         logStore.addLog(`用户 ${userData.username} 登录系统`, 'system');
         router.push('/')
       }).catch(error => {
+        // 登录失败会留在 login 页面，通过页面级错误工具展示失败原因。
         showErrorMessage(error, '登录失败，请重试')
       }).finally(() => {
+        // 无论成功还是失败，请求结束后都关闭按钮 loading。
         loading.value = false
       })
     } else {
+      // 表单没填完整时不发请求，直接停在当前登录页。
       return false;
     }
   });

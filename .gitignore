@@ -30,6 +30,12 @@ logs/
 *.swp
 *~
 
+# AI/本地学习上下文（不提交到展示仓库）
+.ai/
+.agents/
+AGENTS.md
+CLAUDE.md
+
 # 操作系统文件
 .DS_Store
 Thumbs.db
@@ -61,6 +67,14 @@ backend/*.trace.db
 *.mv.db
 *.lock.db
 *.trace.db
+
+# 本地上传文件与证书
+uploads/
+backend/src/main/resources/*.p12
+*.p12
+
+# 生成报告/评审交付物
+代码质量评审包/
 
 # 其他
 *.zip

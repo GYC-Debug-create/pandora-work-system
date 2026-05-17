@@ -1,37 +1,48 @@
-# 智能掌上工作系统
+# Pandora 智能掌上工作系统
 
-#### 介绍
-TeamOrange的智能掌上工作系统
+Pandora 是一个后台管理系统项目，包含 Vue 3 前端和 Spring Boot 后端。项目用于组织后台工作台、用户管理、公司事项、日志记录等管理功能。
 
-#### 软件架构
-软件架构说明
+## 技术栈
 
+- 前端：Vue 3、Vite、Vue Router、Pinia、Element Plus、Axios
+- 后端：Spring Boot 3、Spring Security、MyBatis Plus、H2 Database、JWT
+- 工程：Maven、npm、Vite dev server
 
-#### 安装教程
+## 项目结构
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+```text
+backend/  Spring Boot 后端服务
+web/      Vue 3 + Vite 前端项目
+android/  Android 端历史目录
+```
 
-#### 使用说明
+## 核心功能
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+- 登录与 JWT 登录态
+- Axios 请求封装与 401 会话过期处理
+- Vue Router 路由表与登录态守卫
+- 用户管理、公司事项、部门/角色相关接口
+- 前端日志记录与主题切换
 
-#### 参与贡献
+## 本地运行
 
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
+后端：
 
+```bash
+cd backend
+./mvnw spring-boot:run
+```
 
-#### 特技
+前端：
 
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+```bash
+cd web
+npm install
+npm run dev
+```
+
+前端开发服务默认运行在 `http://127.0.0.1:3000`，并通过 Vite proxy 将 `/api` 请求转发到后端 `http://127.0.0.1:8080`。
+
+## 配置说明
+
+仓库中的 `backend/src/main/resources/application.yml` 仅用于本地开发演示。生产环境应使用外部配置或环境变量替换数据库密码、JWT secret、证书等敏感配置。
