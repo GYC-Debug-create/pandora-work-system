@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { getToken, clearSession } from '@/utils/auth'
 
 // 常量定义
 const HTTP_STATUS = {
@@ -26,7 +27,7 @@ const service = axios.create({
 // 请求拦截器
 service.interceptors.request.use(
   config => {
-    const token = sessionStorage.getItem('admin-token')
+    const token = getToken()
     if (token) {
       config.headers['Authorization'] = 'Bearer ' + token
     }
@@ -48,14 +49,24 @@ service.interceptors.response.use(
     if (error.response) {
       message = typeof error.response.data === 'string'
         ? error.response.data
-        : (error.response.data?.message || error.message)
+        : (error.response.data?.message || error.response.data?.error || error.message)
 
       if (error.response.status === HTTP_STATUS.UNAUTHORIZED) {
+        // 调用方声明自行处理 401（如退出登录接口），这里不弹窗、不跳转
+        if (error.config?.skipAuthHandler) {
+          return Promise.reject(error)
+        }
+
         // 判断是否是登录请求（登录请求不会携带 token）
-        const isLoginRequest = !error.config.headers['Authorization']
+        const isLoginRequest = !error.config?.headers?.['Authorization']
 
         if (isLoginRequest) {
-          // 登录失败：直接返回错误，由登录页面处理
+          // 没带 token 的 401 = 登录失败：统一提示账号或密码错误
+          ElMessage({
+            message: '账号或密码错误',
+            type: 'error',
+            duration: MESSAGE_DURATION
+          })
           return Promise.reject(error)
         } else {
           // 真正的会话过期：统一强制登出并回到登录页
@@ -70,15 +81,15 @@ service.interceptors.response.use(
           }
 
           // 清理本地会话信息
-          sessionStorage.removeItem('admin-token')
-          sessionStorage.removeItem('user-info')
+          clearSession()
 
           // 友好提示 + 重定向到登录页
           ElMessageBox.alert('会话已过期，请重新登录', '提示', {
             type: 'warning',
             confirmButtonText: '重新登录'
           }).finally(() => {
-            isHandlingUnauthorized = false
+            // 不在这里重置标记：整页跳转会重新加载脚本、标记自然复位；
+            // 若提前复位，跳转前陆续返回的 401 会再次弹窗
             window.location.href = '/login'
           })
 

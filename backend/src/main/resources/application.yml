@@ -24,8 +24,9 @@ spring:
       max-file-size: 100MB      # 单个文件最大大小 (您可以根据需求修改，如 50MB, 100MB)
       max-request-size: 100MB
 jwt:
-  # Demo-only key for local development. Replace it outside the repository.
-  secret: <REDACTED>
+  # JWT 签名密钥只从环境变量 JWT_SECRET 读取，仓库里不保存任何密钥。
+  # 冒号后留空只是为了让 JwtUtil 在未设置时给出明确报错（空值不是可用密钥，启动会直接失败）。
+  secret: ${JWT_SECRET:}
 file:
   upload-dir: ./uploads/
 

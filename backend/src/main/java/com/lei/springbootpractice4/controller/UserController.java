@@ -1,7 +1,10 @@
 package com.lei.springbootpractice4.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page; // 引入Page
+import com.lei.springbootpractice4.config.JwtRequestFilter;
 import com.lei.springbootpractice4.config.JwtUtil;
+import com.lei.springbootpractice4.config.RoleConstants;
+import com.lei.springbootpractice4.config.TokenBlacklist;
 import com.lei.springbootpractice4.mapper.RoleMapper;
 import com.lei.springbootpractice4.mapper.UserMapper;
 import com.lei.springbootpractice4.pojo.RolePojo;
@@ -33,26 +36,47 @@ public class UserController { // 移除类级别的 RequestMapping 或修改
     private RoleMapper roleMapper; // <--- 注入 RoleMapper
     @Autowired
     private UserMapper userMapper; // <--- 注入 UserMapper (用于辅助方法)
+    @Autowired
+    private TokenBlacklist tokenBlacklist;
+
+    /** 用户名冲突时返回给前端的业务错误信息 */
+    private static final String USERNAME_EXISTS_MESSAGE = "用户名已存在，请更换用户名";
+
+    /** 数据库唯一约束冲突时，区分是邮箱还是用户名 */
+    private String duplicateKeyMessage(org.springframework.dao.DuplicateKeyException e, String action) {
+        String msg = e.getMessage() == null ? "" : e.getMessage().toUpperCase();
+        if (msg.contains("EMAIL")) {
+            return action + ", 该邮箱已被使用";
+        }
+        if (msg.contains("USERNAME")) {
+            return USERNAME_EXISTS_MESSAGE;
+        }
+        return action + ", 数据重复";
+    }
 
     // POST /user/registerByAdmin (保持不变)
     @PostMapping("/api/user/registerByAdmin")
     public ResponseEntity<String> registerByAdmin(@RequestBody UsersPojo user) {
         try {
+            if (user.getUsername() == null || user.getUsername().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("创建失败, 用户名不能为空");
+            }
+            user.setUsername(user.getUsername().trim());
+            // 用户名唯一性以后端为准（前端当前页检查只是即时提示）
+            if (userService.isUsernameTaken(user.getUsername(), null)) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(USERNAME_EXISTS_MESSAGE);
+            }
             String rawPassword = user.getPasswordHash();
             user.setPasswordHash(rawPassword);
             boolean registSuccess = userService.registerByAdmin(user);
             if (registSuccess) {
                 return ResponseEntity.ok("用户创建成功");
             } else {
-                return ResponseEntity.badRequest().body("创建失败, 用户名已存在");
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(USERNAME_EXISTS_MESSAGE);
             }
         } catch (org.springframework.dao.DuplicateKeyException e) {
-            // 处理邮箱或其他唯一性约束冲突
-            if (e.getMessage().contains("EMAIL")) {
-                return ResponseEntity.badRequest().body("创建失败, 该邮箱已被使用");
-            } else {
-                return ResponseEntity.badRequest().body("创建失败, 数据重复");
-            }
+            // 并发下两次请求同时通过检查时，由数据库唯一约束兜底
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(duplicateKeyMessage(e, "创建失败"));
         } catch (Exception e) {
             return ResponseEntity.status(500).body("创建失败, 系统错误: " + e.getMessage());
         }
@@ -129,7 +153,7 @@ public class UserController { // 移除类级别的 RequestMapping 或修改
         UsersPojo loginUser = userService.login(user.getUsername(), user.getPasswordHash());
         if (loginUser != null) {
             // Web端仅允许ADMIN登录
-            if (loginUser.getRoleId() == null || loginUser.getRoleId() != 1) {
+            if (!RoleConstants.isAdmin(loginUser.getRoleId())) {
                 return ResponseEntity.status(403).body("Web端仅限管理员登录");
             }
 
@@ -156,17 +180,18 @@ public class UserController { // 移除类级别的 RequestMapping 或修改
 
     /**
      * 获取用户列表 (支持分页和查询)
-     * 前端请求示例: GET /api/users?current=1&size=10&username=张三&roleName=管理员
+     * 前端请求示例: GET /api/users?current=1&size=10&username=张三&email=abc&roleName=管理员
      */
     @GetMapping("/api/users")
     public ResponseEntity<Page<UsersPojo>> getUserList(
             @RequestParam(defaultValue = "1") int current,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String username,
+            @RequestParam(required = false) String email,
             @RequestParam(required = false) String roleName) {
-        
-        System.out.println("Received params - current: " + current + ", size: " + size + ", username: " + username + ", roleName: " + roleName);
-        
+
+        System.out.println("Received params - current: " + current + ", size: " + size + ", username: " + username + ", email: " + email + ", roleName: " + roleName);
+
         // 将参数封装到Map中，保持与现有Service方法的兼容性
         Map<String, Object> params = new HashMap<>();
         params.put("page", current);  // 将 current 映射为 page
@@ -174,12 +199,24 @@ public class UserController { // 移除类级别的 RequestMapping 或修改
         if (username != null && !username.trim().isEmpty()) {
             params.put("username", username.trim());
         }
+        if (email != null && !email.trim().isEmpty()) {
+            params.put("email", email.trim());
+        }
         if (roleName != null && !roleName.trim().isEmpty()) {
             params.put("roleName", roleName.trim());
         }
-        
+
         Page<UsersPojo> userPage = userService.getUserList(params);
         return ResponseEntity.ok(userPage);
+    }
+
+    /**
+     * 用户统计（全量，不受分页影响）：总数、活跃数、禁用数、按角色计数
+     * 前端请求示例: GET /api/users/stats
+     */
+    @GetMapping("/api/users/stats")
+    public ResponseEntity<Map<String, Object>> getUserStats() {
+        return ResponseEntity.ok(userService.getUserStats());
     }
 
     /**
@@ -188,13 +225,46 @@ public class UserController { // 移除类级别的 RequestMapping 或修改
      */
     @PutMapping("/api/users/{id}")
     public ResponseEntity<String> updateUser(@PathVariable String id, @RequestBody UsersPojo user) {
-        boolean success = userService.updateUser(id, user);
+        if (user.getUsername() != null) {
+            String newUsername = user.getUsername().trim();
+            if (newUsername.isEmpty()) {
+                return ResponseEntity.badRequest().body("更新失败, 用户名不能为空");
+            }
+            user.setUsername(newUsername);
+            // 用户名唯一性以后端为准：排除自己后仍有同名 → 409
+            if (userService.isUsernameTaken(newUsername, id)) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(USERNAME_EXISTS_MESSAGE);
+            }
+        }
+        boolean success;
+        try {
+            success = userService.updateUser(id, user);
+        } catch (org.springframework.dao.DuplicateKeyException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(duplicateKeyMessage(e, "更新失败"));
+        }
         if (success) {
             return ResponseEntity.ok("用户信息更新成功");
         } else {
             // 可以更细化错误，例如返回404 Not Found
             return ResponseEntity.badRequest().body("更新失败，用户可能不存在或不允许修改");
         }
+    }
+
+    /**
+     * 退出登录：把当前 token 放进内存黑名单，直到它原本的过期时间。
+     * 之后再用这个 token 访问任何受保护接口都会返回 401。
+     */
+    @PostMapping("/api/user/logout")
+    public ResponseEntity<Object> logout(HttpServletRequest request) {
+        String token = JwtRequestFilter.resolveToken(request);
+        if (token != null) {
+            try {
+                tokenBlacklist.add(token, jwtUtil.getExpirationDateFromToken(token).getTime());
+            } catch (Exception e) {
+                // token 已过期或无效：本来就不能再用，无需加入黑名单
+            }
+        }
+        return ResponseEntity.ok(Map.of("message", "已退出登录"));
     }
 
     /**

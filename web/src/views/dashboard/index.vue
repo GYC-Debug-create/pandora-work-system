@@ -277,7 +277,7 @@
               <el-timeline>
                 <el-timeline-item
                   v-for="activity in filteredActivities"
-                  :key="activity.originalIndex"
+                  :key="activity.id"
                   :timestamp="activity.timestamp"
                   :type="getLogTimelineType(activity.type)"
                 >
@@ -351,7 +351,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { getUserList } from '@/api/user'
+import { getUserStats } from '@/api/user'
 import { useLogStore } from '@/store/log'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { showErrorMessage } from '@/utils/error'
@@ -376,7 +376,6 @@ import {
   getLogTagType,
   getLogTimelineType
 } from '@/constants/log'
-import { USER_STATUS } from '@/constants/user'
 
 const logStore = useLogStore()
 
@@ -394,7 +393,7 @@ const filterType = ref('')
 const filterKeyword = ref('')
 const selectAll = ref(false)
 const isFilterActive = ref(false)
-const selectedIndexes = ref(new Set()) // 使用 Set 存储选中的日志索引
+const selectedIds = ref(new Set()) // 使用 Set 存储选中日志的 id（不用下标：新增日志会让下标整体错位）
 
 // 最近操作日志 - 直接从Pinia store中获取
 const activities = computed(() => logStore.logs)
@@ -444,10 +443,9 @@ const logDistribution = computed(() => {
 
 // 筛选后的日志
 const filteredActivities = computed(() => {
-  let result = activities.value.map((log, index) => ({
+  let result = activities.value.map((log) => ({
     ...log,
-    originalIndex: index, // 保存原始索引
-    selected: selectedIndexes.value.has(index) // 根据索引判断是否选中
+    selected: selectedIds.value.has(log.id) // 根据日志 id 判断是否选中
   }))
   
   // 如果没有应用筛选，返回全部
@@ -493,10 +491,10 @@ const selectedCount = computed(() => {
 
 // 切换选中状态
 const toggleSelect = (log) => {
-  if (selectedIndexes.value.has(log.originalIndex)) {
-    selectedIndexes.value.delete(log.originalIndex)
+  if (selectedIds.value.has(log.id)) {
+    selectedIds.value.delete(log.id)
   } else {
-    selectedIndexes.value.add(log.originalIndex)
+    selectedIds.value.add(log.id)
   }
   // 更新全选状态
   updateSelectAllState()
@@ -530,21 +528,21 @@ const resetFilter = () => {
 // 全选/取消全选
 const handleSelectAll = () => {
   if (selectAll.value) {
-    // 全选：将筛选结果中的所有日志索引添加到选中集合
+    // 全选：将筛选结果中的所有日志 id 添加到选中集合
     filteredActivities.value.forEach(log => {
-      selectedIndexes.value.add(log.originalIndex)
+      selectedIds.value.add(log.id)
     })
   } else {
-    // 取消全选：从选中集合中移除筛选结果的所有索引
+    // 取消全选：从选中集合中移除筛选结果的所有日志 id
     filteredActivities.value.forEach(log => {
-      selectedIndexes.value.delete(log.originalIndex)
+      selectedIds.value.delete(log.id)
     })
   }
 }
 
 // 取消选择
 const handleCancelSelect = () => {
-  selectedIndexes.value.clear()
+  selectedIds.value.clear()
   selectAll.value = false
 }
 
@@ -560,9 +558,9 @@ const handleDeleteSelected = () => {
     }
   ).then(() => {
     // 将 Set 转换为数组并传递
-    const indexesToDelete = Array.from(selectedIndexes.value)
-    logStore.deleteLogsByIndexes(indexesToDelete)
-    selectedIndexes.value.clear()
+    const idsToDelete = Array.from(selectedIds.value)
+    logStore.deleteLogsByIds(idsToDelete)
+    selectedIds.value.clear()
     selectAll.value = false
     ElMessage.success('删除成功')
   }).catch(() => {
@@ -582,6 +580,8 @@ const handleClearAll = () => {
     }
   ).then(() => {
     logStore.clearAllLogs()
+    // 日志都没了，勾选集合也要一起清空，否则残留的 id 会让「已选数量」等状态失真
+    selectedIds.value.clear()
     resetFilter()
     ElMessage.success('已清空所有日志')
   }).catch(() => {
@@ -607,38 +607,14 @@ const handleExportJSON = () => {
   ElMessage.success('导出成功')
 }
 
-// 获取用户数据并进行统计（防御性处理：兼容 Page 结构和直接数组）
+// 获取全量用户统计：由后端统计接口直接计数，不再拉一页用户在前端数（超过一页会不准）
 const fetchUserStats = async () => {
   try {
-    const response = await getUserList({ pageNum: 1, pageSize: 100 })
-
-    // 兼容两种返回格式：
-    // 1. MyBatis-Plus Page: { records: [...], total: xx }
-    // 2. 直接数组: [...]
-    let users = []
-    let totalCount = 0
-
-    if (Array.isArray(response?.records)) {
-      // Page 结构
-      users = response.records
-      totalCount = response.total || users.length
-    } else if (Array.isArray(response)) {
-      // 直接数组
-      users = response
-      totalCount = users.length
-    }
-
-    userStats.value.total = totalCount
-
-    const rolesCount = users.reduce((acc, user) => {
-      acc[user.roleName] = (acc[user.roleName] || 0) + 1
-      return acc
-    }, {})
-    userStats.value.roles = rolesCount
-
-    // 统计用户状态分布
-    userStats.value.active = users.filter(user => user.status === USER_STATUS.ACTIVE).length
-    userStats.value.inactive = users.filter(user => user.status === USER_STATUS.INACTIVE).length
+    const stats = await getUserStats()
+    userStats.value.total = stats?.total || 0
+    userStats.value.active = stats?.active || 0
+    userStats.value.inactive = stats?.inactive || 0
+    userStats.value.roles = stats?.roles || {}
   } catch (error) {
     console.error("获取用户数据失败:", error)
     showErrorMessage(error, '获取仪表盘统计数据失败')

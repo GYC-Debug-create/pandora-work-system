@@ -1,13 +1,18 @@
 // 文件: backend/src/main/java/com/lei/springbootpractice4/config/JwtRequestFilter.java
 package com.lei.springbootpractice4.config;
 
+import com.lei.springbootpractice4.mapper.UserMapper;
+import com.lei.springbootpractice4.pojo.UsersPojo;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
@@ -17,16 +22,30 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.ArrayList; // 引入 ArrayList
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
 
+/**
+ * JWT 过滤器：只负责「识别身份」。
+ * - token 有效：把用户和权限写进 SecurityContext（管理员额外带 ROLE_ADMIN）
+ * - 无 token / token 无效 / 已过期 / 已退出(黑名单)：不写身份，并把原因放到 request 属性里，
+ *   由 SecurityConfig 里的 401 入口统一返回。
+ * 「哪些接口要登录、哪些要管理员」在 SecurityConfig 里配置。
+ */
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
+
+    /** 认证失败原因，供 SecurityConfig 的 401 响应读取 */
+    public static final String AUTH_ERROR_ATTRIBUTE = "jwt.auth.error";
 
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private TokenBlacklist tokenBlacklist;
 
+    @Autowired
+    private UserMapper userMapper;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -47,45 +66,60 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             }
         }
 
-
-        final String requestTokenHeader = request.getHeader("Authorization");
-        String username = null;
-        String jwtToken = null;
-        if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
-            jwtToken = requestTokenHeader.substring(7);
-            try {
-                username = jwtUtil.getUsernameFromToken(jwtToken);
-            } catch (IllegalArgumentException e) {
-                System.out.println("Unable to get JWT Token");
-            } catch (ExpiredJwtException e) {
-                System.out.println("JWT Token has expired");
-            } catch (io.jsonwebtoken.MalformedJwtException e) { // <--- 捕获之前的 MalformedJwtException
-                System.out.println("Invalid JWT Token format");
-            }
-        } else {
-            logger.warn("JWT Token does not begin with Bearer String or is missing"); // 修改日志信息
-        }
-
-
-        // 验证 token 并设置 Security Context
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-
-            // --- 修改这里：为用户赋予一个默认权限 ---
-            // 实际项目中，这里应该从数据库加载用户的真实权限
-            UserDetails userDetails = new User(username, "",
-                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")) // <--- 赋予 "ROLE_USER" 权限
-            );
-
-            // 验证 token
-            if (jwtUtil.validateToken(jwtToken, userDetails)) {
-                UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities()); // 使用 userDetails 中的权限
-                usernamePasswordAuthenticationToken
-                        .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                // 设置到 SecurityContext
-                SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
-            }
+        String jwtToken = resolveToken(request);
+        if (jwtToken != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            authenticate(jwtToken, request);
         }
         chain.doFilter(request, response);
+    }
+
+    /** 从 Authorization: Bearer xxx 中取出 token，没有则返回 null */
+    public static String resolveToken(HttpServletRequest request) {
+        final String requestTokenHeader = request.getHeader("Authorization");
+        if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
+            String token = requestTokenHeader.substring(7).trim();
+            return token.isEmpty() ? null : token;
+        }
+        return null;
+    }
+
+    private void authenticate(String jwtToken, HttpServletRequest request) {
+        // 1. 已退出登录的 token 直接视为无效
+        if (tokenBlacklist.contains(jwtToken)) {
+            request.setAttribute(AUTH_ERROR_ATTRIBUTE, "登录已退出，请重新登录");
+            return;
+        }
+
+        // 2. 解析并校验签名、过期时间（解析失败会抛异常）
+        Claims claims;
+        try {
+            claims = jwtUtil.getClaimFromToken(jwtToken, c -> c);
+        } catch (ExpiredJwtException e) {
+            request.setAttribute(AUTH_ERROR_ATTRIBUTE, "登录已过期，请重新登录");
+            return;
+        } catch (JwtException | IllegalArgumentException e) {
+            request.setAttribute(AUTH_ERROR_ATTRIBUTE, "无效的登录凭证");
+            return;
+        }
+
+        // 3. 以数据库中的用户为准：用户被删除则 token 失效；角色变更立即生效
+        String userId = claims.get("userId", String.class);
+        UsersPojo user = userId == null ? null : userMapper.selectById(userId);
+        if (user == null) {
+            request.setAttribute(AUTH_ERROR_ATTRIBUTE, "用户不存在或已被删除，请重新登录");
+            return;
+        }
+
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority(RoleConstants.AUTHORITY_USER));
+        if (RoleConstants.isAdmin(user.getRoleId())) {
+            authorities.add(new SimpleGrantedAuthority(RoleConstants.AUTHORITY_ADMIN));
+        }
+
+        UserDetails userDetails = new User(user.getUsername(), "", authorities);
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
+        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 }

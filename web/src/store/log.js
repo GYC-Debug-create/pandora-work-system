@@ -5,8 +5,24 @@ import { LOG_TYPES, LOG_RETENTION_MS } from '@/constants/log'
 // 常量定义
 const STORAGE_KEY = 'system_logs'
 
+// 生成日志唯一 id：时间戳 + 随机数（同一毫秒内的多条日志也不会重复）
+const generateLogId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+
+// 旧版本存储的日志没有 id，读取时补上，保证按 id 删除/选择能兼容老数据
+const ensureLogIds = (list) => {
+  if (!Array.isArray(list)) return []
+  return list.map(log => (log && log.id ? log : { ...log, id: generateLogId() }))
+}
+
+// CSV 单元格转义（RFC 4180）：整体用双引号包裹，内部的双引号写成两个双引号
+const escapeCsvCell = (value) => {
+  const text = value === null || value === undefined ? '' : String(value)
+  return `"${text.replace(/"/g, '""')}"`
+}
+
 // 创建初始日志对象
 const createInitialLog = () => ({
+  id: generateLogId(),
   content: '系统初始化成功',
   timestamp: new Date().toLocaleString(),
   time: Date.now(),
@@ -19,7 +35,7 @@ export const useLogStore = defineStore('log', () => {
     const savedLogs = localStorage.getItem(STORAGE_KEY)
     if (savedLogs) {
       try {
-        return JSON.parse(savedLogs)
+        return ensureLogIds(JSON.parse(savedLogs))
       } catch (e) {
         console.error('解析日志失败:', e)
         return []
@@ -45,6 +61,7 @@ export const useLogStore = defineStore('log', () => {
   // 添加日志
   const addLog = (message, type = 'operation') => {
     logs.value.unshift({
+      id: generateLogId(),
       content: message,
       timestamp: new Date().toLocaleString(),
       time: Date.now(),
@@ -64,21 +81,23 @@ export const useLogStore = defineStore('log', () => {
     saveToStorage()
   }
 
-  // 删除指定的日志（通过索引数组）
-  const deleteLogsByIndexes = (indexes) => {
-    logs.value = logs.value.filter((_, index) => !indexes.includes(index))
+  // 删除指定的日志（通过日志 id 数组）
+  // 不用下标：导出等操作会在列表头部插入新日志，下标会整体错位
+  const deleteLogsByIds = (ids) => {
+    const idSet = new Set(ids)
+    logs.value = logs.value.filter(log => !idSet.has(log.id))
     saveToStorage()
   }
 
-  // 导出日志为CSV
+  // 导出日志为CSV（每个单元格按 RFC 4180 转义；BOM 在 downloadFile 中统一加）
   const exportToCSV = (filteredLogs = null) => {
     const logsToExport = filteredLogs || logs.value
     const csvContent = [
-      ['时间', '操作内容', '类型'].join(','),
-      ...logsToExport.map(log => 
-        [log.timestamp, `"${log.content}"`, log.type].join(',')
+      ['时间', '操作内容', '类型'].map(escapeCsvCell).join(','),
+      ...logsToExport.map(log =>
+        [log.timestamp, log.content, log.type].map(escapeCsvCell).join(',')
       )
-    ].join('\n')
+    ].join('\r\n')
     
     downloadFile(csvContent, 'logs.csv', 'text/csv;charset=utf-8;')
   }
@@ -108,8 +127,8 @@ export const useLogStore = defineStore('log', () => {
   return { 
     logs, 
     addLog, 
-    clearAllLogs, 
-    deleteLogsByIndexes,
+    clearAllLogs,
+    deleteLogsByIds,
     exportToCSV,
     exportToJSON
   }

@@ -14,11 +14,19 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils; // 引入StringUtils
 
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map; // 引入Map
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService {
+
+    /** 用户状态取值，与 schema.sql 默认值、前端 USER_STATUS 保持一致 */
+    private static final String STATUS_ACTIVE = "活跃";
+    private static final String STATUS_INACTIVE = "禁用";
 
     @Autowired
     private UserMapper userMapper;
@@ -140,14 +148,20 @@ public class UserServiceImpl implements UserService {
 
         // 获取查询参数（只处理前端实际传递的参数）
         String username = params.get("username") instanceof String ? (String) params.get("username") : null;
+        String email = params.get("email") instanceof String ? (String) params.get("email") : null;
         String roleName = params.get("roleName") instanceof String ? (String) params.get("roleName") : null;
-        
-        System.out.println("=== Filter params: username=" + username + ", roleName=" + roleName);
+
+        System.out.println("=== Filter params: username=" + username + ", email=" + email + ", roleName=" + roleName);
 
         // 添加用户名查询条件（模糊查询）
         if (StringUtils.hasText(username)) {
             System.out.println("=== Adding username LIKE filter: " + username);
             queryWrapper.like("username", username);
+        }
+
+        // 添加邮箱查询条件（模糊查询）
+        if (StringUtils.hasText(email)) {
+            queryWrapper.like("email", email);
         }
 
         // 添加角色查询条件
@@ -156,17 +170,23 @@ public class UserServiceImpl implements UserService {
             QueryWrapper<RolePojo> roleQuery = new QueryWrapper<>();
             // 使用数据库字段名 role_name，而不是 Java 属性名 roleName
             roleQuery.like("role_name", roleName);
-            RolePojo role = roleMapper.selectOne(roleQuery);
-            
-            if (role != null) {
-                System.out.println("=== Found role ID: " + role.getRoleId() + " for roleName: " + roleName);
+            // 用 selectList：模糊匹配可能命中多个角色，selectOne 会因多条结果抛异常
+            List<Integer> roleIds = roleMapper.selectList(roleQuery).stream()
+                    .map(RolePojo::getRoleId)
+                    .collect(Collectors.toList());
+
+            if (!roleIds.isEmpty()) {
+                System.out.println("=== Found role IDs: " + roleIds + " for roleName: " + roleName);
                 // 同样使用数据库字段名 role_id
-                queryWrapper.eq("role_id", role.getRoleId());
+                queryWrapper.in("role_id", roleIds);
             } else {
                 System.err.println("=== Role NOT found: " + roleName + ", returning empty result");
                 queryWrapper.eq("role_id", -1);
             }
         }
+
+        // 固定排序，保证翻页时每页数据稳定、不重复不遗漏
+        queryWrapper.orderByAsc("created_at", "user_id");
 
         // 执行查询
         System.out.println("=== Executing query...");
@@ -195,7 +215,7 @@ public class UserServiceImpl implements UserService {
 
             // 设置默认状态
             if (user.getStatus() == null) {
-                user.setStatus("活跃");
+                user.setStatus(STATUS_ACTIVE);
             }
         });
         
@@ -204,6 +224,69 @@ public class UserServiceImpl implements UserService {
     }
 
 // ... (其他方法) ...
+
+    @Override
+    public Map<String, Object> getUserStats() {
+        long total = userMapper.selectCount(null);
+
+        // 状态为空的用户在列表里按「活跃」展示，统计口径保持一致
+        QueryWrapper<UsersPojo> activeQuery = new QueryWrapper<>();
+        activeQuery.and(w -> w.eq("status", STATUS_ACTIVE).or().isNull("status"));
+        long active = userMapper.selectCount(activeQuery);
+
+        QueryWrapper<UsersPojo> inactiveQuery = new QueryWrapper<>();
+        inactiveQuery.eq("status", STATUS_INACTIVE);
+        long inactive = userMapper.selectCount(inactiveQuery);
+
+        // 按角色计数：先把所有角色置 0，再用 GROUP BY 结果填充
+        Map<String, Long> roles = new LinkedHashMap<>();
+        Map<Integer, String> roleNameById = new HashMap<>();
+        for (RolePojo role : roleMapper.selectList(null)) {
+            roleNameById.put(role.getRoleId(), role.getRoleName());
+            roles.put(role.getRoleName(), 0L);
+        }
+        QueryWrapper<UsersPojo> groupQuery = new QueryWrapper<>();
+        groupQuery.select("role_id AS roleId", "COUNT(*) AS cnt").groupBy("role_id");
+        for (Map<String, Object> row : userMapper.selectMaps(groupQuery)) {
+            Object roleIdObj = getIgnoreCase(row, "roleId");
+            Object cntObj = getIgnoreCase(row, "cnt");
+            long cnt = cntObj instanceof Number ? ((Number) cntObj).longValue() : 0L;
+            String name = roleIdObj instanceof Number
+                    ? roleNameById.getOrDefault(((Number) roleIdObj).intValue(), "未知角色")
+                    : "未分配角色";
+            roles.merge(name, cnt, Long::sum);
+        }
+
+        Map<String, Object> stats = new LinkedHashMap<>();
+        stats.put("total", total);
+        stats.put("active", active);
+        stats.put("inactive", inactive);
+        stats.put("roles", roles);
+        return stats;
+    }
+
+    /** H2 返回的列名默认大写，这里忽略大小写取值 */
+    private static Object getIgnoreCase(Map<String, Object> row, String key) {
+        for (Map.Entry<String, Object> e : row.entrySet()) {
+            if (e.getKey() != null && e.getKey().equalsIgnoreCase(key)) {
+                return e.getValue();
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public boolean isUsernameTaken(String username, String excludeUserId) {
+        if (!StringUtils.hasText(username)) {
+            return false;
+        }
+        QueryWrapper<UsersPojo> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("username", username.trim());
+        if (StringUtils.hasText(excludeUserId)) {
+            queryWrapper.ne("user_id", excludeUserId);
+        }
+        return userMapper.selectCount(queryWrapper) > 0;
+    }
 
     @Override
     public boolean updateUser(String userId, UsersPojo user) {

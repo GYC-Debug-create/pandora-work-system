@@ -36,6 +36,15 @@ public class JwtUtil implements Serializable {
     // 在 Bean 初始化后执行，根据字符串生成 SecretKey
     @PostConstruct
     public void init() {
+        // 密钥只来自环境变量 JWT_SECRET（见 application.yml），缺失或过短时直接启动失败并说明原因
+        if (secretString == null || secretString.isBlank()) {
+            throw new IllegalStateException(
+                    "缺少 JWT 签名密钥：请先设置环境变量 JWT_SECRET（至少 32 字节的随机字符串）再启动后端。");
+        }
+        if (secretString.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException(
+                    "环境变量 JWT_SECRET 太短：HS256 要求至少 32 字节，请换一个更长的随机字符串。");
+        }
         // 使用 HMAC-SHA 算法根据密钥字符串生成安全的 SecretKey
         this.secretKey = Keys.hmacShaKeyFor(secretString.getBytes(StandardCharsets.UTF_8));
     }

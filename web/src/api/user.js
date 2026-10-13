@@ -15,15 +15,53 @@ export function login(data) {
 }
 
 /**
- * 获取用户列表 (后端需要实现此接口)
- * @param {Object} params 查询参数 { pageNum, pageSize, name, email, role }
+ * 退出登录：让后端把当前 token 加入黑名单
+ * skipAuthHandler：即使 token 已失效返回 401，也不触发全局「会话过期」弹窗，由调用方自行清理会话
  * @returns {Promise}
  */
-export function getUserList(params) {
+export function logout() {
+  return request({
+    url: '/api/user/logout',
+    method: 'post',
+    skipAuthHandler: true
+  })
+}
+
+/**
+ * 获取用户列表（分页 + 筛选）
+ * 页面使用的参数名与后端接口参数名不同，在这里统一做映射：
+ *   pageNum → current, pageSize → size, name → username, email → email, role → roleName
+ * 空字符串的筛选条件不传，避免后端按空串过滤
+ * @param {Object} params 查询参数 { pageNum, pageSize, name, email, role }
+ * @returns {Promise} MyBatis-Plus Page: { records, total, size, current, pages }
+ */
+export function getUserList(params = {}) {
+  const query = {
+    current: params.pageNum || 1,
+    size: params.pageSize || 10
+  }
+  const filters = { username: params.name, email: params.email, roleName: params.role }
+  Object.keys(filters).forEach((key) => {
+    const value = typeof filters[key] === 'string' ? filters[key].trim() : filters[key]
+    if (value) {
+      query[key] = value
+    }
+  })
   return request({
     url: '/api/users',
     method: 'get',
-    params
+    params: query
+  })
+}
+
+/**
+ * 获取全量用户统计（不受分页影响）
+ * @returns {Promise} { total, active, inactive, roles: { 角色名: 人数 } }
+ */
+export function getUserStats() {
+  return request({
+    url: '/api/users/stats',
+    method: 'get'
   })
 }
 

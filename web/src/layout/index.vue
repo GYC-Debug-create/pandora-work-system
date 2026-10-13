@@ -54,7 +54,7 @@
                 @command="handleCommand"
               >
                 <div class="avatar-container">
-                  <span>管理员</span>
+                  <span>{{ displayName }}</span>
                   <el-icon><CaretBottom /></el-icon>
                 </div>
                 <template #dropdown>
@@ -95,12 +95,18 @@ import Breadcrumb from './components/Breadcrumb.vue'
 import ProfileModal from './components/ProfileModal.vue'
 import { useLogStore } from '@/store/log'
 import { useThemeStore } from '@/store/theme'
+import { logout } from '@/api/user'
+import { getUserInfo, clearSession } from '@/utils/auth'
 
 const isCollapse = ref(false)
 const router = useRouter()
 const profileModalVisible = ref(false)
 const logStore = useLogStore()
 const themeStore = useThemeStore()
+
+// 当前登录用户（登录时后端返回并保存在会话里），头部显示全名，没有则显示用户名
+const userInfo = getUserInfo()
+const displayName = userInfo.fullName || userInfo.username || '未登录用户'
 
 // 计算当前是否为暗色主题
 const isDark = computed(() => themeStore.theme === 'dark')
@@ -122,17 +128,21 @@ const handleCommand = (command) => {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning',
-    }).then(() => {
-      // 获取用户信息
-      const userInfo = JSON.parse(sessionStorage.getItem('user-info') || '{}')
+    }).then(async () => {
       const username = userInfo.username || '用户'
+
+      // 先通知后端把当前 token 加入黑名单；无论成功失败都继续清理本地会话
+      try {
+        await logout()
+      } catch (e) {
+        console.warn('后端退出登录接口调用失败，仍清理本地会话:', e)
+      }
 
       // 记录登出日志
       logStore.addLog(`用户 ${username} 退出系统`, 'system')
 
       // 退出登录
-      sessionStorage.removeItem('admin-token')
-      sessionStorage.removeItem('user-info')
+      clearSession()
       router.push('/login')
       ElMessage.success('已成功退出登录')
     }).catch(() => {

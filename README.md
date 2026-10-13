@@ -53,7 +53,7 @@ Windows 下也可以运行根目录的 `启动服务.bat`，它会分别启动�
 | 配置项 | 用途 | 仓库中的值 |
 | --- | --- | --- |
 | `spring.datasource.password` | 数据库密码 | `<REDACTED>` |
-| `jwt.secret` | JWT 签名密钥（由 `JwtUtil` 通过 `@Value("${jwt.secret}")` 注入） | `<REDACTED>` |
+| `jwt.secret` | JWT 签名密钥（由 `JwtUtil` 注入，启动时校验至少 32 字节） | `${JWT_SECRET:}`，只从环境变量 `JWT_SECRET` 读取，未设置时后端拒绝启动 |
 
 生产环境应使用外部配置或环境变量替换数据库密码、JWT secret、证书等敏感配置。
 

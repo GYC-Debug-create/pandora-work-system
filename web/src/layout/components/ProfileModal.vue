@@ -11,10 +11,10 @@
       border
     >
       <el-descriptions-item label="用户名">
-        admin
+        {{ userInfo.username || '-' }}
       </el-descriptions-item>
       <el-descriptions-item label="角色">
-        系统管理员
+        {{ userInfo.roleName || '-' }}
       </el-descriptions-item>
     </el-descriptions>
     
@@ -77,7 +77,11 @@
 <script setup>
 import { ref, defineProps, defineEmits } from 'vue'
 import { ElMessage } from 'element-plus'
-import { changePassword } from '@/api/user' // 引入修改密码 API
+import { changePassword, logout } from '@/api/user' // 引入修改密码 API
+import { getUserInfo, clearSession } from '@/utils/auth'
+
+// 当前登录用户（登录时后端返回并保存在会话里）
+const userInfo = getUserInfo()
 
 defineProps({
   visible: {
@@ -167,9 +171,14 @@ const handleSubmit = async () => {
     success = true
 
     // 密码修改成功后，延迟1.5秒后自动退出登录
-    setTimeout(() => {
-      sessionStorage.removeItem('admin-token')
-      sessionStorage.removeItem('user-info')
+    // 同时让后端作废当前 token（失败也照常清理本地会话）
+    setTimeout(async () => {
+      try {
+        await logout()
+      } catch (e) {
+        console.warn('后端退出登录接口调用失败，仍清理本地会话:', e)
+      }
+      clearSession()
       window.location.href = '/login'
     }, 1500)
   } catch (error) {

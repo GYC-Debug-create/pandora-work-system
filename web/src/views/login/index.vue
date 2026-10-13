@@ -66,6 +66,7 @@ import { login } from '@/api/user';
 import { useLogStore } from '@/store/log';
 import { useThemeStore } from '@/store/theme';
 import { showErrorMessage } from '@/utils/error';
+import { setSession } from '@/utils/auth';
 
 const router = useRouter();
 const logStore = useLogStore();
@@ -206,13 +207,16 @@ const handleLogin = () => {
         const token = response.token;
         const userData = response.user;
         ElMessage.success(`登录成功，欢迎 ${userData.username}`);
-        sessionStorage.setItem('admin-token', token);
-        sessionStorage.setItem('user-info', JSON.stringify(userData));
+        // 保存 token 和用户信息，头部、个人中心等处从这里读取当前用户
+        setSession(token, userData);
         logStore.addLog(`用户 ${userData.username} 登录系统`, 'system');
         router.push('/')
       }).catch(error => {
         // 登录失败会留在 login 页面，通过页面级错误工具展示失败原因。
-        showErrorMessage(error, '登录失败，请重试')
+        // 401（账号或密码错误）已由请求拦截器统一提示，这里不再重复弹出
+        if (error?.response?.status !== 401) {
+          showErrorMessage(error, '登录失败，请重试')
+        }
       }).finally(() => {
         // 无论成功还是失败，请求结束后都关闭按钮 loading。
         loading.value = false

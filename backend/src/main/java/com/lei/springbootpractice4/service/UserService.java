@@ -17,6 +17,19 @@ public interface UserService {
     Page<UsersPojo> getUserList(Map<String, Object> params);
 
     /**
+     * 全量用户统计（不分页）
+     * @return { total, active, inactive, roles: { 角色名: 人数 } }
+     */
+    Map<String, Object> getUserStats();
+
+    /**
+     * 用户名是否已被占用
+     * @param username 要检查的用户名
+     * @param excludeUserId 排除的用户ID（编辑时传自己的ID，新增时传 null）
+     */
+    boolean isUsernameTaken(String username, String excludeUserId);
+
+    /**
      * 更新用户信息 (不包括密码)
      * @param userId 要更新的用户ID
      * @param user 包含更新信息的用户对象

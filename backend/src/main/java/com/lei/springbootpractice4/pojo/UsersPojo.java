@@ -3,6 +3,7 @@ package com.lei.springbootpractice4.pojo;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -14,6 +15,8 @@ public class UsersPojo {
     @TableId(value="user_id", type= IdType.ASSIGN_UUID)
     private String userId;
     private String username;
+    // 只允许从请求体写入（登录/创建用户时传密码），任何接口返回 JSON 时都不输出该字段
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String passwordHash;
     private String fullName;
     private String email;

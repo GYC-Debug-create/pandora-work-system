@@ -466,14 +466,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { User, CircleCheck, CircleClose, Plus } from '@element-plus/icons-vue'
 import {
   getUserList as fetchUsers,
   createUser,
   updateUser,
-  deleteUser
+  deleteUser,
+  getUserStats
 } from '@/api/user'
 import { getDepartments } from '@/api/department'
 import { getRoles } from '@/api/role'
@@ -517,6 +518,9 @@ const mbtiOptions = ref(MBTI_OPTIONS)
 
 // Refs and Reactive Variables
 const queryParams = ref({ name: '', email: '', role: '', pageNum: 1, pageSize: 10 })
+// 已生效的筛选条件：点「搜索」/「重置」时才更新。
+// 翻页只带已生效的条件，避免「改了输入框没点搜索就翻页」时用新条件查到错位的页
+const appliedFilters = ref({ name: '', email: '', role: '' })
 const userList = ref([])
 const total = ref(0)
 const loading = ref(false)
@@ -542,15 +546,21 @@ const userForm = ref({ ...initialFormState })
 const userFormRef = ref()
 const queryFormRef = ref()
 
-// Computed Properties
-const userStats = computed(() => {
-  const currentUsers = Array.isArray(userList.value) ? userList.value : []
-  return {
-    total: total.value,
-    active: currentUsers.filter(user => user.status === USER_STATUS.ACTIVE).length,
-    inactive: currentUsers.filter(user => user.status === USER_STATUS.INACTIVE).length
-  }
-})
+// 顶部统计卡片：全量统计来自后端统计接口，不受分页和筛选影响
+const userStats = ref({ total: 0, active: 0, inactive: 0 })
+
+const fetchUserStats = () => {
+  getUserStats().then(stats => {
+    userStats.value = {
+      total: stats?.total || 0,
+      active: stats?.active || 0,
+      inactive: stats?.inactive || 0
+    }
+  }).catch(error => {
+    console.error('获取用户统计失败:', error)
+    logStore.addLog('获取用户统计失败', 'error')
+  })
+}
 
 // Validation Rules
 const validateUsernameUnique = (rule, value, callback) => {
@@ -636,7 +646,12 @@ const fetchRoles = () => {
 // 获取用户列表（防御性处理：兼容 Page 结构和直接数组）
 const getList = () => {
   loading.value = true
-  fetchUsers(queryParams.value).then(response => {
+  const params = {
+    ...appliedFilters.value,
+    pageNum: queryParams.value.pageNum,
+    pageSize: queryParams.value.pageSize
+  }
+  fetchUsers(params).then(response => {
     // 兼容两种返回格式：
     // 1. MyBatis-Plus Page: { records: [...], total: xx }
     // 2. 直接数组: [...]
@@ -651,6 +666,13 @@ const getList = () => {
       // 直接数组
       users = response
       totalCount = users.length
+    }
+
+    // 当前页被删空（例如删掉了最后一页的唯一一条）时，自动回到上一页
+    if (users.length === 0 && totalCount > 0 && queryParams.value.pageNum > 1) {
+      queryParams.value.pageNum -= 1
+      getList()
+      return
     }
 
     userList.value = users
@@ -668,8 +690,18 @@ const getList = () => {
 
 // Event Handlers
 
-// 查询按钮
+// 把输入框里的筛选条件设为「已生效」
+const applyFilters = () => {
+  appliedFilters.value = {
+    name: queryParams.value.name,
+    email: queryParams.value.email,
+    role: queryParams.value.role
+  }
+}
+
+// 查询按钮：筛选条件变了，页码回到第 1 页
 const handleQuery = () => {
+  applyFilters()
   queryParams.value.pageNum = 1
   getList()
 }
@@ -682,6 +714,7 @@ const resetQuery = () => {
   queryParams.value.name = ''
   queryParams.value.email = ''
   queryParams.value.role = ''
+  applyFilters()
   queryParams.value.pageNum = 1
   getList()
 }
@@ -752,6 +785,7 @@ const handleDelete = (row) => {
   ).then(() => {
     deleteUser(row.userId).then(() => {
       getList()
+      fetchUserStats()
       ElMessage({ type: 'success', message: '删除成功!' })
       logStore.addLog(`删除了用户 "${row.username}" (ID: ${row.userId})`)
     }).catch(() => {
@@ -773,7 +807,7 @@ const submitForm = () => {
 
     const isEdit = userForm.value.userId !== undefined;
 
-    // 统一对用户名做一次前端唯一性校验：
+    // 统一对用户名做一次前端唯一性校验（仅作即时提示，最终以后端 409 为准）：
     // - 只校验当前已加载在 userList 里的数据
     // - 编辑场景下排除当前这条记录本身
     const normalizedUsername = (userForm.value.username || '').trim();
@@ -830,12 +864,16 @@ const submitForm = () => {
 
     apiCall.then(() => {
       getList();
+      fetchUserStats();
       ElMessage({ type: 'success', message: successMsg });
       logStore.addLog(actionLog);
       dialogVisible.value = false;
     }).catch((error) => {
       const action = isEdit ? '更新' : '创建';
-      showErrorMessage(error, `${action}用户失败`);
+      // 409 = 后端判定用户名（或邮箱）重复，提示文案以后端返回为准，已由请求拦截器弹出，这里不重复提示
+      if (error?.response?.status !== 409) {
+        showErrorMessage(error, `${action}用户失败`);
+      }
       logStore.addLog(`${action}用户 "${dataToSend.username}" 失败`, 'error');
     });
   });
@@ -845,6 +883,7 @@ const submitForm = () => {
 onMounted(() => {
   fetchDepartments()
   fetchRoles()
+  fetchUserStats()
   getList()
 })
 </script>
